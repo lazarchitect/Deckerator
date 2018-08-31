@@ -6,14 +6,22 @@ site = Flask(__name__)
 def main():
 	return render_template("splash.html")
 
-@site.route('/login')
+@site.route("/login")
 def loginPage():
 	return render_template("login.html")
 
+@site.route("/loginprocess.php", methods = ['POST'])
+def loginProcess():
+	return render_template("loginprocess.php")
+
 @site.route('/signup')
 def signupPage():
-	return render_template("signup.html")
+	return "sdfsdf"
 
-@site.route('/homepage')
+@site.route('/homepage.php')
 def homepage():
 	return "Welcome to the site!"
+
+@site.route('/loginfail')
+def loginfail():
+	return render_template("loginfail.html")
