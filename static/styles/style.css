@@ -1,0 +1,84 @@
+body{
+	background-color: #6666cc;
+}
+
+header{
+	width: 100%;
+	position: fixed;
+	left: -10px;
+	top: -10px;
+	width: 104%;
+	background-color: #ffcccc;
+	height: 60px;
+}
+
+.headerlink{
+	padding-top: 40px;
+	padding-left: 40px;
+	font-size: 20px;
+}
+
+p{
+	position: relative;
+	font-family: Garamond;
+	font-size: 36px;
+}
+
+a:hover{
+	background-color: red;
+	border-radius: 3px;
+}
+
+footer{
+	background-color: #ddffdd;
+	width: 104%;
+	height: 60px;
+	position: fixed;
+	bottom: -10px;
+	left: 1px;
+}
+
+#loginbox{
+	width: 30%;
+	background-color: white;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: auto;
+	margin-bottom: 10%;
+	top: 20%;
+	border-radius: 20px;
+	position: relative;
+}
+
+#emailp{
+	padding-left: 21%;
+	margin: auto;
+}
+
+#passwordp{
+	padding-left: 10%;
+	margin: auto;
+}
+
+#infop{
+	text-align: center;
+	padding-top: 2%;
+	/*margin: auto;*/
+}
+
+#loginbutton{
+	position: relative;
+	left: 68%;
+	bottom: 2%;
+}
+
+.inputbox{
+	font-size: 20px;
+	width: 200px;
+}
+
+#footertext{
+	position: fixed;
+	bottom: 15px;
+	left: 3%;
+}

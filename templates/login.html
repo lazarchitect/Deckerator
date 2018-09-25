@@ -2,17 +2,22 @@
 <html>
 <head>
 	<title>Log In</title>
-
+	<link rel="stylesheet" href="static/styles/style.css">
+	<link rel="icon" href="static/favicon.png">
 </head>
 <body>
 
-	<form action="loginprocess.php" method="POST">
-	   Username: <input name="username">
-	   <br>
-	   Password: <input type="password" name="password">
-	   <br>
-	   <button type="submit">Submit</button>
-	</form>
+
+	<div id="loginbox">
+		<p id="infop">Enter your info here.</p>
+		<form action="loginprocess" method="POST">
+		   <p id="emailp">Email: <input name="email" class="inputbox"></p>
+		   <br>
+		   <p id="passwordp">Password: <input type="password" name="password" class="inputbox"></p>
+		   <br>
+		   <button type="submit" id="loginbutton">Submit</button>
+		</form>
+	</div>	
 
 
 </body>
