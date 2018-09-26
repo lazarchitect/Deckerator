@@ -1,21 +1,32 @@
 body{
-	background-color: #6666cc;
+	background-color: #8ED2FF;
+	padding-left: 5%;
 }
 
 header{
+	z-index: 2; 
 	width: 100%;
 	position: fixed;
 	left: -10px;
 	top: -10px;
 	width: 104%;
-	background-color: #ffcccc;
+	background-color: #0065FF;
 	height: 60px;
 }
 
-.headerlink{
-	padding-top: 40px;
-	padding-left: 40px;
-	font-size: 20px;
+#headerdiv{
+	position: relative;
+}
+
+header > a {
+	position: absolute;
+	margin-top: 1.5%;
+}
+
+header > a:hover{
+	color: black;
+	background-color: white;
+	border-radius: 4px; 
 }
 
 p{
@@ -24,13 +35,9 @@ p{
 	font-size: 36px;
 }
 
-a:hover{
-	background-color: red;
-	border-radius: 3px;
-}
 
 footer{
-	background-color: #ddffdd;
+	background-color: #00A7AD;
 	width: 104%;
 	height: 60px;
 	position: fixed;

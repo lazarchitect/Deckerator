@@ -3,17 +3,38 @@
 <html>
 <head>
 	<title>Homepage</title>
-	<link rel="stylesheet" href="static/styles/style.css">
+	<link href="static/style.css" rel="stylesheet">
 	<link rel="icon" href="static/favicon.png">
 </head>
 <body>
 
 	<header>
-		<a href="/logout" class="headerlink"> Log Out </a>
-
+		<div id="headerdiv">
+			<a href="/logout" class="logoutbutton"> Log Out </a>
+		</div>
 	</header>
 
+	<br><br>
+
 	<p>Hello, {{email}}</p>
+
+	Your Decks:
+
+	1.
+	2.
+	3.
+	4.
+	<a href="yourdecks.html">See More</a>
+
+	<a href="newdeck.html"> New Deck</a>
+
+	<a href="community.html"> Community Decks </a>
+
+	<a href="cards.html"> See Cards </a>
+
+	<footer>
+		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
+	</footer>
 
 
 </body>

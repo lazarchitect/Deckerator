@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, session
-
 import pymysql.cursors
+import hashlib
 
 site = Flask(__name__)
 
@@ -25,10 +25,17 @@ connection = pymysql.connect(
 # except:
 # 	print("sql connection failed. Undo try block for info")
 
+def password_hash(unsecure_string):
+	m = hashlib.sha256()
+	m.update(unsecure_string.encode('utf-8'))
+	print(m.hexdigest())
+	return m.hexdigest()
+
 def valid_login(email, password):
 	try:
 		with connection.cursor() as cursor:
 			query = "SELECT * FROM deckerator.users WHERE email=%s AND password=%s"
+			password = password_hash(password)
 			cursor.execute(query, (email, password))
 			connection.commit()
 			# connection.close()
@@ -97,6 +104,7 @@ def signupProcess():
 	try:
 		with connection.cursor() as cursor:
 			query = "INSERT INTO deckerator.users (username, email, password) VALUES (%s, %s, %s)"
+			password = password_hash(password)
 			cursor.execute(query, (username, email, password))
 			connection.commit()
 			# connection.close()
@@ -116,10 +124,10 @@ def logout():
 	return redirect('/')
 
 @site.errorhandler(404)
-def fourohfour(blergh):
-	return "Whatever you were looking for does not or no longer exists. Head back to the homepage <a href=\"/\">here.</a>"
+def handle404(idk):
+	return render_template("404error.html")
 
 @site.errorhandler(500)
-def fourohfour(blergh):
+def handle500(idk):
 	return render_template("500error.html")
 
