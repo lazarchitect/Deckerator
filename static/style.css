@@ -5,28 +5,33 @@ body{
 
 header{
 	z-index: 2; 
-	width: 100%;
 	position: fixed;
-	left: -10px;
-	top: -10px;
-	width: 104%;
+	left: 0;
+	top: 0;
+	width: 100%;
 	background-color: #0065FF;
 	height: 60px;
 }
 
-#headerdiv{
-	position: relative;
-}
-
 header > a {
-	position: absolute;
-	margin-top: 1.5%;
+	position: relative;
+	top: 25%;
 }
 
 header > a:hover{
 	color: black;
 	background-color: white;
 	border-radius: 4px; 
+}
+
+.settingsbutton{
+	left: 75%;
+	color: black;
+}
+
+.logoutbutton{
+	left: 80%;
+	color: black;
 }
 
 p{
