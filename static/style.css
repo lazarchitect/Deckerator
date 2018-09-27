@@ -16,6 +16,7 @@ header{
 header > a {
 	position: relative;
 	top: 25%;
+	color: black;
 }
 
 header > a:hover{
@@ -24,14 +25,16 @@ header > a:hover{
 	border-radius: 4px; 
 }
 
+#homebutton{
+	left: 10%;
+}
+
 .settingsbutton{
 	left: 75%;
-	color: black;
 }
 
 .logoutbutton{
 	left: 80%;
-	color: black;
 }
 
 p{
