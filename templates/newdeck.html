@@ -1,0 +1,39 @@
+<!doctype html>
+
+<html>
+<head>
+	<title>Homepage</title>
+	<link href="static/style.css" rel="stylesheet">
+	<link rel="icon" href="static/favicon.png">
+</head>
+<body>
+
+
+	<header>
+		<a href="/settings" class="settingsbutton"> Account Settings </a>
+		<a href="/logout" class="logoutbutton"> Log Out </a>
+	</header>
+
+	<br><br>
+
+	<p>Create your deck here by entering cards and adding them to the decklist.</p>
+
+	<form action="/retrievecard" method="POST">
+		enter card name: <input name="cardname">
+		<input type="submit">
+	</form>
+
+	<!-- text box to type in cards for scryfall -->
+	<!-- when cards appear, click to add to deck -->
+	<!-- "save deck" button -->
+
+	<!-- for later: deck analysis box with mana curve, colors, land base, price, etc -->
+
+	<!-- for later: card recommender based on mana curve fit, colors, mechanics?? -->
+	<footer>
+		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
+	</footer>
+
+
+</body>
+</html>

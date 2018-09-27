@@ -17,11 +17,13 @@ header > a {
 	position: relative;
 	top: 25%;
 	color: black;
+	font-family: Garamond;
+	font-size: 20px;
+	background-color: #bbbbbb;
+	border-radius: 3px;
 }
 
 header > a:hover{
-	color: black;
-	background-color: white;
 	border-radius: 4px; 
 }
 
@@ -78,7 +80,6 @@ footer{
 #infop{
 	text-align: center;
 	padding-top: 2%;
-	/*margin: auto;*/
 }
 
 #loginbutton{
@@ -96,4 +97,33 @@ footer{
 	position: fixed;
 	bottom: 15px;
 	left: 3%;
+	color: white;
+}
+
+/*
+FOR HOMEPAGE
+*/
+
+#decks{
+	border-radius: 5%;
+	top: 20%;
+	position: absolute;
+	width: 30%;
+	height: 80%;
+	background-color: #ff88ff;
+	overflow: scroll;
+}
+
+#createnewdeck{
+	position: absolute;
+	width: 30%;
+	border-radius: 5%;
+	height: 10%;
+	background-color: red;
+	text-align: center;
+	font-size: 20px;
+}
+
+#createdecktext{
+	padding-top: 20%;
 }
