@@ -127,15 +127,15 @@ def signupProcess():
 	email = request.form['email']
 
 	if username == "" or password == "" or email=="":
-		return "No fields can be empty. <a href = \"/signup\">go back</a> and try again."
+		return render_template("signuperror.html", error="No fields can be empty.")
 
 	if password != repeatpw:
-		return "incorrect repeat password. <a href = \"/signup\">go back</a> and try again."
-		
-	if infoTaken(username, email):
-		return "that username or email was already used. <a href = \"/signup\">go back</a> and try again."
+		return render_template("signuperror.html", error="Incorrect repeat password.")
 
-	#success!
+	if infoTaken(username, email):
+		return render_template("signuperror.html", error="That username or email was already used.")
+
+	#successful account creation!
 	try:
 		with connection.cursor() as cursor:
 			query = "INSERT INTO deckerator.users (username, email, password) VALUES (%s, %s, %s)"
@@ -159,6 +159,10 @@ def homepage():
 def logout():
 	del session['email']
 	return redirect('/')
+
+@site.route('/settings')
+def settingsPage():
+	return render_template("settings.html")	
 
 ##############################
 #ERROR HANDLER FUNCTIONS
