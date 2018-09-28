@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session
 import pymysql.cursors
 import hashlib
+import requests
 
 ##
 #Table of Contents
@@ -163,6 +164,22 @@ def logout():
 @site.route('/settings')
 def settingsPage():
 	return render_template("settings.html")	
+
+@site.route('/newdeck')
+def newDeckPage():
+	return render_template("newdeck.html")
+
+@site.route('/retrievecard', methods=["POST"])
+def retreiveCard():
+	cardname = request.form["cardname"]
+
+	url = "https://api.scryfall.com/cards/named?fuzzy="
+
+	cardData = requests.get(url+cardname).json()
+
+	image_url = cardData['image_uris']['normal']
+
+
 
 ##############################
 #ERROR HANDLER FUNCTIONS
