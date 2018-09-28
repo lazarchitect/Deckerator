@@ -16,12 +16,38 @@
 
 	<br><br>
 
+	<script type="text/javascript">
+
+		function getCard () {
+			const Http = new XMLHttpRequest();
+			const url = "https://api.scryfall.com/cards/named?fuzzy="
+			var cardName = document.getElementById('textfield').value;
+			Http.open("GET", url+cardName);
+			Http.send();
+			console.log("sent");
+
+			Http.onreadystatechange=(e)=>{
+				var response = Http.responseText;
+				var obj = JSON.parse(response);
+				imageURL = obj.image_uris.normal;
+				console.log("image url is " + imageURL);
+				document.getElementById('cardspot').setAttribute("src", imageURL)
+			}
+		}
+
+
+	</script>
+
 	<p>Create your deck here by entering cards and adding them to the decklist.</p>
 
-	<form action="/retrievecard" method="POST">
-		enter card name: <input name="cardname">
-		<input type="submit">
-	</form>
+	<div>
+		<p>enter card name: <input id="textfield"></p>
+		<button onclick="getCard()"></button>
+	</div>
+
+	<div>
+		<img src="" id="cardspot">
+	</div>
 
 	<!-- text box to type in cards for scryfall -->
 	<!-- when cards appear, click to add to deck -->
