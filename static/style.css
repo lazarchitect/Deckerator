@@ -50,7 +50,7 @@ footer{
 	background-color: #00A7AD;
 	width: 104%;
 	height: 60px;
-	position: fixed;
+	position: absolute;
 	bottom: -10px;
 	left: 1px;
 }
@@ -133,11 +133,15 @@ FOR HOMEPAGE
 FOR NEWDECK
 */
 
-#decklist{
+#decklistzone{
 	position: absolute;
+	top: 30%;
+	left: 25%;
 }
 
-
+#decklist{
+	overflow: auto;
+}
 
 
 

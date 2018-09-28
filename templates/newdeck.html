@@ -33,13 +33,14 @@
 				var obj = JSON.parse(response);
 				imageURL = obj.image_uris.normal;
 				document.getElementById('cardspot').setAttribute("src", imageURL);
+				document.getElementById('cardtext').innerText = "Click on the card to add it to your deck.";
 				document.getElementById('cardspot').setAttribute("onclick", "addToList(\"" + cardName+ "\")");
 			}
 		}
 
 
 		function addToList(cardName){
-			document.getElementById("decklist").innerHTML += cardName;
+			document.getElementById("decklist").innerHTML += cardName + "\n";
 		}
 
 
@@ -55,14 +56,14 @@
 	</div>
 
 	<div>
-		<img src="" id="cardspot" style="background-color: black; width: 20%; height: 40%; border-radius: 5%;">
+		<div id="cardtext"></div>
+		<img src="" id="cardspot" style="background-color: black; width: 18%; height: 36%; border-radius: 5%;">
 	</div>
 
 
-	<div id="decklist">
-		Here's the list, y'all:
-
-	</div>
+	<span id="decklistzone">
+		<textarea rows=25 cols=25 id="decklist"></textarea>
+	</span>
 
 	<!-- text box to type in cards for scryfall -->
 	<!-- when cards appear, click to add to deck -->
