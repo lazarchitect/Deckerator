@@ -50,9 +50,11 @@ def password_hash(unsecure_string):
 	m = hashlib.sha256() #create an object for hashing
 	m.update(encoded) #feed it the encoded string
 	secure = m.hexdigest() #get a sendable version
+	secure = secure[:42] #the hex digest is too long for pymysql. idk why.
 	return secure
 
 #checks with the database to see if a given email and password exists
+#returns true if the user exists and typed their password correctly
 def valid_login(email, password):
 	try:
 		with connection.cursor() as cursor:
@@ -60,8 +62,7 @@ def valid_login(email, password):
 			password = password_hash(password)
 			cursor.execute(query, (email, password))
 			connection.commit()
-			# connection.close()
-			return cursor.fetchall() != [] 
+			return cursor.fetchone() != None # if there is NO result, the user does NOT exist
 	except AttributeError:
 		return "Could not connect to database. Try again later."		
 
@@ -90,7 +91,18 @@ def loginPage():
 @site.route("/loginprocess", methods = ['POST'])
 def loginProcess():
 	if valid_login(request.form['email'], request.form['password']):
+
+		#GET USERNAME, USERID FROM DATABASE
+		with connection.cursor() as cursor:
+			query = "SELECT userid, username FROM deckerator.users WHERE email=%s"
+			cursor.execute(query, (request.form['email']))
+			connection.commit()
+			userDetails = cursor.fetchone()
+
 		session['email'] = request.form['email']
+		session['userid'] = userDetails[0]
+		session['username'] = userDetails[1]
+
 		return redirect('/homepage') #success
 	else:
 		return redirect('/loginfail') #failure
@@ -109,11 +121,9 @@ def signupPage():
 def infoTaken(username, email):
 	try:
 		with connection.cursor() as cursor:
-				query = "SELECT * FROM deckerator.users WHERE username=%s AND email=%s"
+				query = "SELECT * FROM deckerator.users WHERE username=%s OR email=%s"
 				cursor.execute(query, (username, email))
 				connection.commit()
-				# connection.close()
-				print(cursor.fetchall())
 				return cursor.fetchall() != () # if there is a match in the database
 	except AttributeError:
 		return "Could not connect to database. Try again later."

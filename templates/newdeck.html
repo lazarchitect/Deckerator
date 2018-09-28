@@ -19,34 +19,49 @@
 	<script type="text/javascript">
 
 		function getCard () {
+			
 			const Http = new XMLHttpRequest();
 			const url = "https://api.scryfall.com/cards/named?fuzzy="
+			
 			var cardName = document.getElementById('textfield').value;
+			
 			Http.open("GET", url+cardName);
 			Http.send();
-			console.log("sent");
-
+			
 			Http.onreadystatechange=(e)=>{
 				var response = Http.responseText;
 				var obj = JSON.parse(response);
 				imageURL = obj.image_uris.normal;
-				console.log("image url is " + imageURL);
-				document.getElementById('cardspot').setAttribute("src", imageURL)
+				document.getElementById('cardspot').setAttribute("src", imageURL);
+				document.getElementById('cardspot').setAttribute("onclick", "addToList(\"" + cardName+ "\")");
 			}
+		}
+
+
+		function addToList(cardName){
+			document.getElementById("decklist").innerHTML += cardName;
 		}
 
 
 	</script>
 
-	<p>Create your deck here by entering cards and adding them to the decklist.</p>
+	<p>Create your deck here by entering cards and adding them to the decklist.</p>	
 
 	<div>
-		<p>enter card name: <input id="textfield"></p>
-		<button onclick="getCard()"></button>
+		<p>
+			Enter card name: <input id="textfield">
+			<button onclick="getCard()" style="position: inline;">Search</button>
+		</p>	
 	</div>
 
 	<div>
-		<img src="" id="cardspot">
+		<img src="" id="cardspot" style="background-color: black; width: 20%; height: 40%; border-radius: 5%;">
+	</div>
+
+
+	<div id="decklist">
+		Here's the list, y'all:
+
 	</div>
 
 	<!-- text box to type in cards for scryfall -->
