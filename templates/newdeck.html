@@ -46,7 +46,7 @@
 
 	</script>
 
-	<p>Create your deck here by entering cards and adding them to the decklist.</p>	
+	<p>Create your deck here by entering cards and adding them to the decklist. One card per line.</p>	
 
 	<div>
 		<p>
@@ -60,10 +60,16 @@
 		<img src="" id="cardspot" style="background-color: black; width: 18%; height: 36%; border-radius: 5%;">
 	</div>
 
-
 	<span id="decklistzone">
-		<textarea rows=25 cols=25 id="decklist"></textarea>
+		<form id="formid" action="submitdeck" method="POST">
+			Deck name (required): <input type="text" name="name">
+			<textarea name="deck" rows=25 cols=25 id="decklist" form="formid"></textarea>
+			<button type="submit"> Upload Deck </button>
+		</form>
 	</span>
+	
+
+
 
 	<!-- text box to type in cards for scryfall -->
 	<!-- when cards appear, click to add to deck -->

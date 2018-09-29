@@ -169,6 +169,8 @@ def homepage():
 @site.route('/logout')
 def logout():
 	del session['email']
+	del session['userid']
+	del session['username']
 	return redirect('/')
 
 @site.route('/settings')
@@ -179,16 +181,35 @@ def settingsPage():
 def newDeckPage():
 	return render_template("newdeck.html")
 
-@site.route('/retrievecard', methods=["POST"])
-def retreiveCard():
-	cardname = request.form["cardname"]
+@site.route('/submitdeck', methods=["POST"])
+def submitDeck():
+	#the decklist arrives, with each card name specified with a space
+	deck = request.form["deck"]
+	name = request.form["name"]
+	
+	if deck=="" or name=="":
+		return "You can't leave the decklist or deck name blank. Go back and try again."
+	
+	deck = deck.split("\r\n")
+	
+	deckJSON = "{"
 
-	url = "https://api.scryfall.com/cards/named?fuzzy="
+	for card in deck:
+		deckJSON += "\""+card+"\":1," #needs proper formatting from list to dict
 
-	cardData = requests.get(url+cardname).json()
+	#TODO: actually count the cards and write in their counts, instead of having duplicates
 
-	image_url = cardData['image_uris']['normal']
+	deckJSON = deckJSON[:-1] + "}"	#drop the trailing comma and close the dict.
 
+	try:
+		with connection.cursor() as cursor:
+			query = "INSERT INTO deckerator.decks (code, name, userid) VALUES (%s, %s, %s)"
+			cursor.execute(query, (deckJSON, name, session["userid"]))
+			connection.commit()
+	except AttributeError:
+		return "Database technical difficulties. Sorry. Try again later."
+
+	return render_template("deck.html", deck=deck, name=name)
 
 
 ##############################
