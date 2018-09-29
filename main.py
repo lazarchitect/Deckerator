@@ -190,6 +190,17 @@ def submitDeck():
 	if deck=="" or name=="":
 		return "You can't leave the decklist or deck name blank. Go back and try again."
 	
+	#this block checks for duplicates based on its name. makes it possible to delete a deck later.
+	try:
+		with connection.cursor() as cursor:
+			query = "SELECT * FROM deckerator.decks WHERE name=%s AND userid=%s"
+			cursor.execute(query, (name, str(session['userid'])))
+			connection.commit()
+			if cursor.fetchone() != None:
+				return render_template("deckerror.html", error="A single user can't have two decks with the same name.")
+	except AttributeError:
+		return "Database technical difficulties. Sorry. Try again later."
+
 	deck = deck.split("\r\n")
 	
 	deckJSON = "{"
@@ -211,6 +222,19 @@ def submitDeck():
 
 	return render_template("deck.html", deck=deck, name=name)
 
+@site.route('/deletedeck', methods=["POST"])
+def deleteDeck():
+	name = request.form["name"]
+	try:
+		with connection.cursor() as cursor:
+			query = "DELETE FROM deckerator.decks WHERE name=%s AND userid=%s"
+			cursor.execute(query, (name, session['userid']))
+			connection.commit()
+	except AttributeError:
+		return "Database technical difficulties. Sorry. Try again later."
+
+	return render_template("deckdeleted.html")	
+
 
 ##############################
 #ERROR HANDLER FUNCTIONS
@@ -219,10 +243,10 @@ def submitDeck():
 #404 error page not found.
 @site.errorhandler(404)
 def handle404(idk):
-	return render_template("404error.html")
+	return render_template("404error.html"), 404
 
 #500 error server error. this one's my bad.
 @site.errorhandler(500)
 def handle500(idk):
-	return render_template("500error.html")
+	return render_template("500error.html"), 500
 

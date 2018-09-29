@@ -1,0 +1,54 @@
+
+<html>
+<head>
+	<title>{{name}}</title>
+	<link rel="stylesheet" href="static/style.css">
+	<link rel="icon" href="static/favicon.png">
+</head>
+<body>
+
+	<header>
+		<a href="/" id="homebutton"> Home </a>
+	</header>
+
+	<br><br>
+
+	<p>Here's your deck duder</p>
+
+	<p>{{deck}}</p>
+
+	<script type="text/javascript">
+		
+		function deletedeck(){
+			if (confirm("Are you sure you want to delete this deck?")){
+				
+				var submitForm = document.createElement("form");
+				submitForm.setAttribute("action", "deletedeck");
+				submitForm.setAttribute("method", "post");
+
+				var input = document.createElement("input");
+
+				input.setAttribute("type", "text");
+				input.setAttribute("name", "name");
+				input.setAttribute("value", "{{name}}");
+
+				submitForm.appendChild(input);
+
+				document.body.appendChild(submitForm);
+
+				submitForm.submit();
+
+			}
+		}
+
+	</script>
+
+	<button onclick="deletedeck()">Delete Deck</button>
+
+	<footer>
+		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
+	</footer>
+
+
+</body>
+</html>
