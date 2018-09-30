@@ -149,6 +149,7 @@ def signupProcess():
 	#successful account creation!
 	try:
 		with connection.cursor() as cursor:
+			t  = time.time()
 			query = "INSERT INTO deckerator.users (username, email, password) VALUES (%s, %s, %s)"
 			password = password_hash(password) #gotta hash the plaintext
 			cursor.execute(query, (username, email, password))
@@ -220,7 +221,7 @@ def submitDeck():
 	except AttributeError:
 		return "Database technical difficulties. Sorry. Try again later."
 
-	return render_template("deck.html", deck=deck, name=name)
+	return render_template("deck.html", name=name, deck=deck)
 
 @site.route('/deletedeck', methods=["POST"])
 def deleteDeck():
@@ -234,6 +235,67 @@ def deleteDeck():
 		return "Database technical difficulties. Sorry. Try again later."
 
 	return render_template("deckdeleted.html")	
+
+@site.route('/editdeck', methods=["POST"])
+def editDeck():
+	name = request.form["name"]
+	deck = None
+	try:
+		with connection.cursor() as cursor:
+			query = "SELECT code FROM deckerator.decks WHERE name=%s AND userid=%s"
+			cursor.execute(query, (name, session['userid']))
+			connection.commit()
+			deck = cursor.fetchone()
+	except AttributeError:
+		return "Database technical difficulties. Sorry. Try again later."
+
+	if deck == None:
+		return "deck is none?" #this could happen due to sql server down, or the deck was never uploaded?
+
+	#deck is a tuple whos first element is a str representation of a dict (lol)
+
+	deck = eval(deck[0]) #turn it into a dict
+
+	deckString = ""
+
+	for card in deck:
+		deckString += card + ","
+
+	return render_template("editdeck.html", name=name, deck=deckString)
+
+
+@site.route('/resubmitdeck', methods=["POST"])
+def resubmitDeck():
+	#the decklist arrives, with each card name specified with a space
+	deck = request.form["deck"]
+	name = request.form["name"]
+	
+	if deck=="":
+		return "You can't leave the decklist blank. Go back and try again."
+
+	if name=="":
+		return "You can't leave the deck name blank. Go back and try again."			
+
+	deck = deck.split("\r\n")
+	
+	deckJSON = "{"
+
+	for card in deck:
+		deckJSON += "\""+card+"\":1," #needs proper formatting from list to dict
+
+	#TODO: actually count the cards and write in their counts, instead of having duplicates
+
+	deckJSON = deckJSON[:-1] + "}"	#drop the trailing comma and close the dict.
+
+	try:
+		with connection.cursor() as cursor:
+			query = "UPDATE deckerator.decks SET code=%s WHERE name=%s AND userid=%s"
+			cursor.execute(query, (deckJSON, name, session["userid"]))
+			connection.commit()
+	except AttributeError:
+		return "Database technical difficulties. Sorry. Try again later."
+
+	return render_template("deck.html", name=name, deck=deck)	
 
 
 ##############################

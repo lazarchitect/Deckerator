@@ -2,7 +2,7 @@
 
 <html>
 <head>
-	<title>Create Deck</title>
+	<title>{{name}}</title>
 	<link href="static/style.css" rel="stylesheet">
 	<link rel="icon" href="static/favicon.png">
 </head>
@@ -46,7 +46,7 @@
 
 	</script>
 
-	<p>Create your deck here by entering cards and adding them to the decklist. One card per line.</p>	
+	<p>Edit your deck here by entering cards and adding them to the decklist. One card per line.</p>	
 
 	<div>
 		<p>
@@ -61,19 +61,22 @@
 	</div>
 
 	<span id="decklistzone">
-		<form id="formid" action="submitdeck" method="POST">
-			Deck name (required): <input type="text" name="name">
+		<form id="formid" action="resubmitdeck" method="POST">
+			Deck name: <input type="text" name="name" value="{{name}}">
+
 			<textarea name="deck" rows=25 cols=25 id="decklist" form="formid"></textarea>
-			<button type="submit"> Upload Deck </button>
+			<button type="submit"> Confirm Deck Edit </button>
 		</form>
 	</span>
-	
 
-
-
-	<!-- text box to type in cards for scryfall -->
-	<!-- when cards appear, click to add to deck -->
-	<!-- "save deck" button -->
+	<script type="text/javascript">
+		var rawDeckList = "{{deck}}";
+		var DeckList = rawDeckList.split(",");
+		for (var i = DeckList.length - 1; i >= 0; i--) {
+			document.getElementById('decklist').innerHTML += DeckList[i] + "\n"; 
+		};
+		
+	</script>
 
 	<!-- for later: deck analysis box with mana curve, colors, land base, price, etc -->
 

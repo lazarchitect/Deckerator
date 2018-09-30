@@ -18,12 +18,12 @@
 	<p>{{deck}}</p>
 
 	<script type="text/javascript">
-		
-		function deletedeck(){
-			if (confirm("Are you sure you want to delete this deck?")){
-				
-				var submitForm = document.createElement("form");
-				submitForm.setAttribute("action", "deletedeck");
+
+		//send in a form with the deck's name to a flask page
+		//so flask can retrive deck from DB and do something with it
+		function formsubmit (action) {
+			var submitForm = document.createElement("form");
+				submitForm.setAttribute("action", action);
 				submitForm.setAttribute("method", "post");
 
 				var input = document.createElement("input");
@@ -33,17 +33,28 @@
 				input.setAttribute("value", "{{name}}");
 
 				submitForm.appendChild(input);
-
 				document.body.appendChild(submitForm);
-
 				submitForm.submit();
+		}
 
+
+		function editdeck () {
+			// redirect to edit deck page
+			// needs deck name and session userid so python can fetch the deck
+			formsubmit("editdeck");
+		}
+		
+		function deletedeck(){
+			if (confirm("Are you sure you want to delete this deck?")){
+				formsubmit("deletedeck");
 			}
 		}
 
 	</script>
 
-	<button onclick="deletedeck()">Delete Deck</button>
+	<button onclick="editdeck()"> Edit Deck </button>
+
+	<button onclick="deletedeck()"> Delete Deck </button>
 
 	<footer>
 		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
