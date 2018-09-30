@@ -138,18 +138,17 @@ def signupProcess():
 	email = request.form['email']
 
 	if username == "" or password == "" or email=="":
-		return render_template("signuperror.html", error="No fields can be empty.")
+		return render_template("error.html", back="/signup", name="Signup Error", error="No fields can be empty.")
 
 	if password != repeatpw:
-		return render_template("signuperror.html", error="Incorrect repeat password.")
+		return render_template("error.html", back="/signup", name="Password Error", error="Incorrect repeat password.")
 
 	if infoTaken(username, email):
-		return render_template("signuperror.html", error="That username or email was already used.")
+		return render_template("error.html", back="/signup", name="Account Error", error="That username or email was already used.")
 
 	#successful account creation!
 	try:
 		with connection.cursor() as cursor:
-			t  = time.time()
 			query = "INSERT INTO deckerator.users (username, email, password) VALUES (%s, %s, %s)"
 			password = password_hash(password) #gotta hash the plaintext
 			cursor.execute(query, (username, email, password))
@@ -198,7 +197,7 @@ def submitDeck():
 			cursor.execute(query, (name, str(session['userid'])))
 			connection.commit()
 			if cursor.fetchone() != None:
-				return render_template("deckerror.html", error="A single user can't have two decks with the same name.")
+				return render_template("error.html", back="/newdeck", name="Deck Name Error", error="A single user can't have two decks with the same name.")
 	except AttributeError:
 		return "Database technical difficulties. Sorry. Try again later."
 
@@ -271,10 +270,10 @@ def resubmitDeck():
 	name = request.form["name"]
 	
 	if deck=="":
-		return "You can't leave the decklist blank. Go back and try again."
+		return render_template("error.html", name="Deck Edit Error", back="/editdeck", error="You can't leave the decklist blank.")
 
 	if name=="":
-		return "You can't leave the deck name blank. Go back and try again."			
+		return render_template("error.html", name="Name Edit Error", back="/editdeck", error="You can't leave the deck name blank.")
 
 	deck = deck.split("\r\n")
 	
@@ -295,7 +294,7 @@ def resubmitDeck():
 	except AttributeError:
 		return "Database technical difficulties. Sorry. Try again later."
 
-	return render_template("deck.html", name=name, deck=deck)	
+	return render_template("deck.html", name=name, deck=deck)
 
 
 ##############################
