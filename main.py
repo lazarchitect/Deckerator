@@ -356,7 +356,19 @@ def resubmitDeck():
 	return render_template("deck.html", name=name, deck=deck)
 
 
+@site.route("/<username>/<deckname>")
+def deckview(username, deckname):
 
+
+	# get decklist from server based on username and deckname.
+	with connection.cursor() as cursor:
+		query = "SELECT code FROM deckerator.decks WHERE userid=%s AND name=%s"
+		cursor.execute(query, (session['userid'], deckname))
+		connection.commit()
+		deck = cursor.fetchone()
+		print(deck)
+
+	return render_template("deck.html", deck=deck, name=deckname)
 
 
 

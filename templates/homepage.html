@@ -3,8 +3,8 @@
 <html>
 <head>
 	<title>Homepage</title>
-	<link href="static/style.css" rel="stylesheet">
-	<link rel="icon" href="static/favicon.png">
+	<link href="/static/style.css" rel="stylesheet">
+	<link rel="icon" href="/static/favicon.png">
 </head>
 <body>
 
@@ -35,7 +35,8 @@
 
 		for (var i = 0; i < decklist.length; i++) {
 			
-			var deckDisplay = document.createElement("p");
+			var deckDisplay = document.createElement("a");
+			deckDisplay.setAttribute("href", "{{session['username']}}/"+ decklist[i])
 			
 			deckDisplay.innerText = decklist[i];
 			
