@@ -41,12 +41,12 @@
 		function editdeck () {
 			// redirect to edit deck page
 			// needs deck name and session userid so python can fetch the deck
-			formsubmit("editdeck");
+			formsubmit("/editdeck");
 		}
 		
 		function deletedeck(){
 			if (confirm("Are you sure you want to delete this deck?")){
-				formsubmit("deletedeck");
+				formsubmit("/deletedeck");
 			}
 		}
 

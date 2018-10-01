@@ -327,6 +327,7 @@ def resubmitDeck():
 	#the decklist arrives, with each card name specified with a space
 	deck = request.form["deck"]
 	name = request.form["name"]
+	oldname = request.form["oldname"]
 	
 	if deck=="":
 		return render_template("error.html", name="Deck Edit Error", back="/editdeck", error="You can't leave the decklist blank.")
@@ -347,8 +348,8 @@ def resubmitDeck():
 
 	try:
 		with connection.cursor() as cursor:
-			query = "UPDATE deckerator.decks SET code=%s WHERE name=%s AND userid=%s"
-			cursor.execute(query, (deckJSON, name, session["userid"]))
+			query = "UPDATE deckerator.decks SET code=%s, name=%s WHERE name=%s AND userid=%s"
+			cursor.execute(query, (deckJSON, name, oldname, session["userid"]))
 			connection.commit()
 	except AttributeError:
 		return "Database technical difficulties. Sorry. Try again later."
