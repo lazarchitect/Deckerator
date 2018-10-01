@@ -16,13 +16,34 @@
 
 	<br><br>
 
+
+
 	<div id="decks">
 
 		<!-- Acquire user's decks from database -->
 		<!-- list them here programatically with JavaScript -->
-		<!-- CANT DO THIS UNTIL NEW DECK PAGE IS MADE AND DECKS ARE ADDED. SO SKIP FOR NOW. -->
-	
+		
+
+
 	</div>
+
+	<script type="text/javascript">
+		
+		var decklist = "{{decks}}".split(", ");
+
+		var decklistDiv = document.getElementById('decks');
+
+		for (var i = 0; i < decklist.length; i++) {
+			
+			var deckDisplay = document.createElement("p");
+			
+			deckDisplay.innerText = decklist[i];
+			
+			decklistDiv.appendChild(deckDisplay);
+		
+		};
+
+	</script>
 
 	<br>
 

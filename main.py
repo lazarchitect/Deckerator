@@ -12,6 +12,28 @@ import requests
 #Error Handler Functions
 ##
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##############################
 #SETUP VARIABLES
 ##############################
@@ -69,6 +91,29 @@ def valid_login(email, password):
 #self explanatory. checks to see if user is logged in. for pages like homepage/splash
 def loggedIn():
 	return 'email' in session
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##############################
 #SITE PAGES
@@ -160,9 +205,23 @@ def signupProcess():
 # the user's main page. view meaningful content here.
 @site.route('/homepage')
 def homepage():
-	if loggedIn():
-		return render_template("homepage.html", email=session['email'])
-	return render_template("notloggedin.html") #how did you get here, you rascal?
+	if not loggedIn():
+		return render_template("notloggedin.html") #how did you get here, you rascal?
+	
+	#get all decks from sqldb that match user's ID
+	#send in names and deck codes. anything else?
+	with connection.cursor() as cursor:
+		query = "SELECT name FROM deckerator.decks WHERE userid=%s"
+		cursor.execute(query, (session['userid']))
+		connection.commit()
+		decks = cursor.fetchall()
+
+		decksString=""
+
+		for deck in decks: #comes as tuple. need to turn into json
+			decksString += deck[0] + ", " #deckData at zero is the name
+
+		return render_template("homepage.html", decks=decksString)
 
 # when the user hits the logout button, this function happens. 
 #then they are redirected back to the welcome page.
@@ -295,6 +354,24 @@ def resubmitDeck():
 		return "Database technical difficulties. Sorry. Try again later."
 
 	return render_template("deck.html", name=name, deck=deck)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ##############################

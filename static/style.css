@@ -105,13 +105,18 @@ FOR HOMEPAGE
 */
 
 #decks{
-	border-radius: 5%;
 	top: 20%;
 	position: absolute;
 	width: 30%;
 	height: 80%;
-	background-color: #ff88ff;
+	background-color: #cc88cc;
 	overflow: scroll;
+}
+
+#decks > div{
+	position: relative;
+	height: 100px;
+	background-color: red;
 }
 
 #createnewdeck{
