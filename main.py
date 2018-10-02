@@ -216,18 +216,21 @@ def homepage():
 	#get all decks from sqldb that match user's ID.
 	#Send names to template.
 	
-	query = "SELECT name FROM deckerator.decks WHERE userid=%s"
+	query = "SELECT name, deckid FROM deckerator.decks WHERE userid=%s"
 	params = (session['userid'])
 	decks = fetchAllRecords(query, params)
 
-	decksString = ""
+	deckNameString = ""
+	deckIdString = ""
 
 	for deck in decks: #comes as tuple. need to turn into json
-		decksString += deck[0] + DELIMITER #deckData at zero is the name.
+		deckNameString += deck[0] + DELIMITER #deckData at zero is the name.
+		deckIdString += str(deck[1]) + DELIMITER
 
-	decksString = decksString[:-3] #drop final delimiter
+	deckNameString = deckNameString[:-3] #drop final delimiter
+	deckIdString = deckIdString[:-3] #drop final delimiter
 
-	return render_template("homepage.html", decks=decksString) 
+	return render_template("homepage.html", decks=deckNameString, ids=deckIdString) 
 
 # when the user hits the logout button, this function happens. 
 #then they are redirected back to the welcome page.
@@ -294,27 +297,30 @@ def deleteDeck():
 @site.route('/editdeck', methods=["POST"])
 def editDeck():
 	name = request.form["name"]
-	deck = None
 	
-	query = "SELECT code FROM deckerator.decks WHERE name=%s AND userid=%s"
+	query = "SELECT code, deckid FROM deckerator.decks WHERE name=%s AND userid=%s"
 	params = (name, session['userid'])
-	deck = fetchRecord(query, params)
+	deckData = fetchRecord(query, params)
 
-	if deck == None:
-		return "deck is none?" #this could happen due to sql server down, or the deck was never uploaded?
+	if deckData == None:
+		return "deckData is none?" #this could happen due to sql server down, or the deck was never uploaded?
+
+	print(str(deckData) + " is deckdata")
 
 	#deck is a tuple whos first element is a str representation of a dict (lol)
 
-	deck = eval(deck[0]) #turn it into a dict
+	deck = eval(deckData[0]) #turn it into a dict
+	deckid = deckData[1]
 
 	deckString = ""
 
 	for card in deck:
-		deckString += card + DELIMITER
+		for count in range(deck[card]):
+			deckString += card + DELIMITER
 
 	deckString = deckString[:-3] #drop final delimiter	
 
-	return render_template("editdeck.html", name=name, deck=deckString)
+	return render_template("editdeck.html", name=name, deck=deckString, deckid=deckid)
 
 
 @site.route('/resubmitdeck', methods=["POST"])
@@ -322,7 +328,7 @@ def resubmitDeck():
 	#the decklist arrives, with each card name specified with a space
 	deck = request.form["deck"]
 	name = request.form["name"]
-	oldname = request.form["oldname"]
+	deckid = request.form["deckid"]
 	
 	if deck=="":
 		return render_template("error.html", name="Deck Edit Error", back="/editdeck", error="You can't leave the decklist blank.")
@@ -332,33 +338,34 @@ def resubmitDeck():
 
 	deck = deck.split("\r\n")
 	
-	deckJSON = "{"
+	deckdict = {}
 
 	for card in deck:
-		deckJSON += "\""+card+"\":1," #needs proper formatting from list to dict
+		try:
+			deckdict[card] += 1
+		except KeyError:
+			deckdict[card] = 1
 
-	#TODO: actually count the cards and write in their counts, instead of having duplicates
+	deckdict = str(deckdict).replace("\'", "\"") #to make it  into valid json
 
-	deckJSON = deckJSON[:-1] + "}"	#drop the trailing comma and close the dict.
-
-	query = "UPDATE deckerator.decks SET code=%s, name=%s WHERE name=%s AND userid=%s"
-	params = (deckJSON, name, oldname, session["userid"])
+	query = "UPDATE deckerator.decks SET code=%s, name=%s WHERE deckid=%s"
+	params = (deckdict, name, deckid)
 	fetchRecord(query, params)
 	
-	return render_template("deck.html", name=name, deck=deck)
+	return redirect("/deck/" + str(deckid))
 
-@site.route("/deck/<username>/<deckname>")
-def deckview(username, deckname):
+@site.route("/deck/<deckid>")
+def deckview(deckid):
 
 	# get decklist from server based on username and deckname.
-	query = "SELECT code FROM deckerator.decks WHERE userid=%s AND name=%s"
-	params = (session['userid'], deckname)
+	query = "SELECT name, code FROM deckerator.decks WHERE deckid=%s"
+	params = (deckid)
 	deck = fetchRecord(query, params)
 
 	if deck==None: #no such deck exists
 		abort(404)
 
-	return render_template("deck.html", deck=deck, name=deckname)
+	return render_template("deck.html", name=deck[0], deck=deck[1])
 
 
 

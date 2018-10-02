@@ -63,7 +63,7 @@
 	<span id="decklistzone">
 		<form id="formid" action="resubmitdeck" method="POST">
 			Deck name: <input type="text" name="name" value="{{name}}">
-			<input name="oldname" value="{{name}}" style="display: none;"> <!-- this maintains the old deck name for sqldb updating -->
+			<input name="deckid" value="{{deckid}}" style="display: none;"> <!-- this maintains the deck id for sqldb updating -->
 			<textarea name="deck" rows=25 cols=25 id="decklist" form="formid"></textarea>
 			<button type="submit"> Confirm Deck Edit </button>
 		</form>

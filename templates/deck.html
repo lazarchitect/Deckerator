@@ -25,16 +25,18 @@
 			var submitForm = document.createElement("form");
 				submitForm.setAttribute("action", action);
 				submitForm.setAttribute("method", "post");
+				submitForm.setAttribute("style", "display: none;");
 
-				var input = document.createElement("input");
-
+			var input = document.createElement("input");
 				input.setAttribute("type", "text");
 				input.setAttribute("name", "name");
 				input.setAttribute("value", "{{name}}");
+				input.setAttribute("style", "display: none;");
 
-				submitForm.appendChild(input);
-				document.body.appendChild(submitForm);
-				submitForm.submit();
+			submitForm.appendChild(input);
+			
+			document.body.appendChild(submitForm);
+			submitForm.submit();
 		}
 
 

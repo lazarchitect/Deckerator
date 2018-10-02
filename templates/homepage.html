@@ -26,9 +26,11 @@
 
 	<script type="text/javascript">
 		
-		console.log("{{decks}}");
+		// console.log("{{decks}}");
+		// console.log("{{ids}}");
 
 		var decklist = "{{decks}}".split("[~{");
+		var idlist = "{{ids}}".split("[~{");
 		
 		if("{{decks}}" == ""){ //need this because string split makes an empty string one value, when it should be zero
 			decklist = [];
@@ -43,7 +45,7 @@
 			
 			var deckLink = document.createElement("a");
 			deckLink.innerText = decklist[i] + "\n";
-			deckLink.setAttribute("href", "/deck/{{session['username']}}/"+ decklist[i])
+			deckLink.setAttribute("href", "/deck/"+ idlist[i])
 
 			deckDiv.appendChild(deckLink);
 			decklistDiv.appendChild(deckDiv);
