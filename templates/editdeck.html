@@ -71,8 +71,8 @@
 
 	<script type="text/javascript">
 		var rawDeckList = "{{deck}}";
-		var DeckList = rawDeckList.split(",");
-		for (var i = DeckList.length - 1; i >= 0; i--) {
+		var DeckList = rawDeckList.split("[~{");
+		for (var i = 0; i < DeckList.length; i++) {
 			document.getElementById('decklist').innerHTML += DeckList[i] + "\n"; 
 		};
 		

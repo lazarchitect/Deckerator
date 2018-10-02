@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, abort
 import pymysql.cursors
 import hashlib
 import requests
@@ -50,6 +50,8 @@ db = f.readline()
 
 f.close()
 
+DELIMITER = "[~{"
+
 connection = None
 
 try:
@@ -75,30 +77,38 @@ def password_hash(unsecure_string):
 	secure = secure[:42] #the hex digest is too long for pymysql. idk why.
 	return secure
 
-#checks with the database to see if a given email and password exists
-#returns true if the user exists and typed their password correctly
-def valid_login(email, password):
-	try:
-		with connection.cursor() as cursor:
-			query = "SELECT * FROM deckerator.users WHERE email=%s AND password=%s"
-			password = password_hash(password)
-			cursor.execute(query, (email, password))
-			connection.commit()
-			return cursor.fetchone() != None # if there is NO result, the user does NOT exist
-	except AttributeError:
-		return "Could not connect to database. Try again later."		
-
 #self explanatory. checks to see if user is logged in. for pages like homepage/splash
 def loggedIn():
 	return 'email' in session
 
+#given a query, returns a single row from the database that matches.
+#this method will return None for INSERT statements
+def fetchRecord(query, params):
+	try:
+		with connection.cursor() as cursor:
+			cursor.execute(query, params)
+			connection.commit()
+			return cursor.fetchone()
+	
+	except AttributeError:
+		print("attribute error")
+
+	return None	#exceptions hit this	
 
 
+#given a query, returns a single row from the database that matches.
+#this method will return () (an empty tuple) for INSERT statements
+def fetchAllRecords(query, params):
+	try:
+		with connection.cursor() as cursor:
+			cursor.execute(query, params)
+			connection.commit()
+			return cursor.fetchall() #the only difference is here
+	
+	except AttributeError:
+		print("attribute error")
 
-
-
-
-
+	return None	#exceptions hit this
 
 
 
@@ -135,22 +145,23 @@ def loginPage():
 #the action form for a login attempt. Checks with database for valid credentials.
 @site.route("/loginprocess", methods = ['POST'])
 def loginProcess():
-	if valid_login(request.form['email'], request.form['password']):
+	
+	# check if the user exists.
+	# if so, set the session fields to their details and redirect to homepage
+	# else, redirect to loginfail
 
-		#GET USERNAME, USERID FROM DATABASE
-		with connection.cursor() as cursor:
-			query = "SELECT userid, username FROM deckerator.users WHERE email=%s"
-			cursor.execute(query, (request.form['email']))
-			connection.commit()
-			userDetails = cursor.fetchone()
+	query = "SELECT userid, username FROM deckerator.users WHERE email=%s AND password=%s"
+	params = (request.form['email'], password_hash(request.form['password']))
 
+	row = fetchRecord(query, params)
+
+	if row != None: #if it DOES exist...
+		session['userid'] = row[0]
+		session['username'] = row[1]
 		session['email'] = request.form['email']
-		session['userid'] = userDetails[0]
-		session['username'] = userDetails[1]
-
-		return redirect('/homepage') #success
+		return redirect('/homepage') 
 	else:
-		return redirect('/loginfail') #failure
+		return redirect('/loginfail')
 
 #when a user enters invalid credentials
 @site.route('/loginfail')
@@ -164,14 +175,12 @@ def signupPage():
 
 #for new users, checks to see if the username/email they gave is already in use
 def infoTaken(username, email):
-	try:
-		with connection.cursor() as cursor:
-				query = "SELECT * FROM deckerator.users WHERE username=%s OR email=%s"
-				cursor.execute(query, (username, email))
-				connection.commit()
-				return cursor.fetchall() != () # if there is a match in the database
-	except AttributeError:
-		return "Could not connect to database. Try again later."
+
+	query = "SELECT * FROM deckerator.users WHERE username=%s OR email=%s"
+	params = (username, email)
+	row = fetchRecord(query, params)
+
+	return row != None #meaning there is a match, and the info IS taken.
 
 #the action form for signing up. 
 #Sends email, username, and password to the database IF everything was filled out correctly.
@@ -192,36 +201,33 @@ def signupProcess():
 		return render_template("error.html", back="/signup", name="Account Error", error="That username or email was already used.")
 
 	#successful account creation!
-	try:
-		with connection.cursor() as cursor:
-			query = "INSERT INTO deckerator.users (username, email, password) VALUES (%s, %s, %s)"
-			password = password_hash(password) #gotta hash the plaintext
-			cursor.execute(query, (username, email, password))
-			connection.commit()
-		return render_template("signupSuccess.html") #send the user to the proper page.
-	except AttributeError:
-		return "Could not connect to database. Try again later." #possibly database downtime? idk
+	query = "INSERT INTO deckerator.users (username, email, password) VALUES (%s, %s, %s)"
+	params = (username, email, password_hash(password))
+	fetchRecord(query, params) #nothing is fetched but the query does insert.
 
+	return render_template("signupSuccess.html") #send the user to the proper page.
+	
 # the user's main page. view meaningful content here.
 @site.route('/homepage')
 def homepage():
 	if not loggedIn():
 		return render_template("notloggedin.html") #how did you get here, you rascal?
 	
-	#get all decks from sqldb that match user's ID
-	#send in names and deck codes. anything else?
-	with connection.cursor() as cursor:
-		query = "SELECT name FROM deckerator.decks WHERE userid=%s"
-		cursor.execute(query, (session['userid']))
-		connection.commit()
-		decks = cursor.fetchall()
+	#get all decks from sqldb that match user's ID.
+	#Send names to template.
+	
+	query = "SELECT name FROM deckerator.decks WHERE userid=%s"
+	params = (session['userid'])
+	decks = fetchAllRecords(query, params)
 
-		decksString=""
+	decksString = ""
 
-		for deck in decks: #comes as tuple. need to turn into json
-			decksString += deck[0] + ", " #deckData at zero is the name
+	for deck in decks: #comes as tuple. need to turn into json
+		decksString += deck[0] + DELIMITER #deckData at zero is the name.
 
-		return render_template("homepage.html", decks=decksString)
+	decksString = decksString[:-3] #drop final delimiter
+
+	return render_template("homepage.html", decks=decksString) 
 
 # when the user hits the logout button, this function happens. 
 #then they are redirected back to the welcome page.
@@ -250,16 +256,14 @@ def submitDeck():
 		return "You can't leave the decklist or deck name blank. Go back and try again."
 	
 	#this block checks for duplicates based on its name. makes it possible to delete a deck later.
-	try:
-		with connection.cursor() as cursor:
-			query = "SELECT * FROM deckerator.decks WHERE name=%s AND userid=%s"
-			cursor.execute(query, (name, str(session['userid'])))
-			connection.commit()
-			if cursor.fetchone() != None:
-				return render_template("error.html", back="/newdeck", name="Deck Name Error", error="A single user can't have two decks with the same name.")
-	except AttributeError:
-		return "Database technical difficulties. Sorry. Try again later."
-
+	
+	query = "SELECT * FROM deckerator.decks WHERE name=%s AND userid=%s"
+	params = (name, str(session['userid']))
+	collision = fetchRecord(query, params)
+	
+	if collision != None:
+		return render_template("error.html", back="/newdeck", name="Deck Name Error", error="A single user can't have two decks with the same name.")
+	
 	deck = deck.split("\r\n")
 	
 	deckJSON = "{"
@@ -271,26 +275,19 @@ def submitDeck():
 
 	deckJSON = deckJSON[:-1] + "}"	#drop the trailing comma and close the dict.
 
-	try:
-		with connection.cursor() as cursor:
-			query = "INSERT INTO deckerator.decks (code, name, userid) VALUES (%s, %s, %s)"
-			cursor.execute(query, (deckJSON, name, session["userid"]))
-			connection.commit()
-	except AttributeError:
-		return "Database technical difficulties. Sorry. Try again later."
-
+	query = "INSERT INTO deckerator.decks (code, name, userid) VALUES (%s, %s, %s)"
+	params = (deckJSON, name, session["userid"])
+	fetchRecord(query, params) #nothing is fetched, dumb name, but it does insert
+	
 	return render_template("deck.html", name=name, deck=deck)
 
 @site.route('/deletedeck', methods=["POST"])
 def deleteDeck():
 	name = request.form["name"]
-	try:
-		with connection.cursor() as cursor:
-			query = "DELETE FROM deckerator.decks WHERE name=%s AND userid=%s"
-			cursor.execute(query, (name, session['userid']))
-			connection.commit()
-	except AttributeError:
-		return "Database technical difficulties. Sorry. Try again later."
+	
+	query = "DELETE FROM deckerator.decks WHERE name=%s AND userid=%s"
+	params = (name, session['userid'])
+	fetchRecord(query, params)
 
 	return render_template("deckdeleted.html")	
 
@@ -298,14 +295,10 @@ def deleteDeck():
 def editDeck():
 	name = request.form["name"]
 	deck = None
-	try:
-		with connection.cursor() as cursor:
-			query = "SELECT code FROM deckerator.decks WHERE name=%s AND userid=%s"
-			cursor.execute(query, (name, session['userid']))
-			connection.commit()
-			deck = cursor.fetchone()
-	except AttributeError:
-		return "Database technical difficulties. Sorry. Try again later."
+	
+	query = "SELECT code FROM deckerator.decks WHERE name=%s AND userid=%s"
+	params = (name, session['userid'])
+	deck = fetchRecord(query, params)
 
 	if deck == None:
 		return "deck is none?" #this could happen due to sql server down, or the deck was never uploaded?
@@ -317,7 +310,9 @@ def editDeck():
 	deckString = ""
 
 	for card in deck:
-		deckString += card + ","
+		deckString += card + DELIMITER
+
+	deckString = deckString[:-3] #drop final delimiter	
 
 	return render_template("editdeck.html", name=name, deck=deckString)
 
@@ -346,28 +341,22 @@ def resubmitDeck():
 
 	deckJSON = deckJSON[:-1] + "}"	#drop the trailing comma and close the dict.
 
-	try:
-		with connection.cursor() as cursor:
-			query = "UPDATE deckerator.decks SET code=%s, name=%s WHERE name=%s AND userid=%s"
-			cursor.execute(query, (deckJSON, name, oldname, session["userid"]))
-			connection.commit()
-	except AttributeError:
-		return "Database technical difficulties. Sorry. Try again later."
-
+	query = "UPDATE deckerator.decks SET code=%s, name=%s WHERE name=%s AND userid=%s"
+	params = (deckJSON, name, oldname, session["userid"])
+	fetchRecord(query, params)
+	
 	return render_template("deck.html", name=name, deck=deck)
 
-
-@site.route("/<username>/<deckname>")
+@site.route("/deck/<username>/<deckname>")
 def deckview(username, deckname):
 
-
 	# get decklist from server based on username and deckname.
-	with connection.cursor() as cursor:
-		query = "SELECT code FROM deckerator.decks WHERE userid=%s AND name=%s"
-		cursor.execute(query, (session['userid'], deckname))
-		connection.commit()
-		deck = cursor.fetchone()
-		print(deck)
+	query = "SELECT code FROM deckerator.decks WHERE userid=%s AND name=%s"
+	params = (session['userid'], deckname)
+	deck = fetchRecord(query, params)
+
+	if deck==None: #no such deck exists
+		abort(404)
 
 	return render_template("deck.html", deck=deck, name=deckname)
 

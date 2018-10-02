@@ -16,53 +16,41 @@
 
 	<br><br>
 
-
+	<div id="createnewdeck">
+		<p><a href="/newdeck" id="createdecktext"> Create New Deck </a></p>
+	</div>
 
 	<div id="decks">
-
-		<!-- Acquire user's decks from database -->
-		<!-- list them here programatically with JavaScript -->
-		
-
-
+		<!-- Acquire user's decks from database, list them here programatically with JavaScript -->
 	</div>
 
 	<script type="text/javascript">
 		
-		var decklist = "{{decks}}".split(", ");
+		console.log("{{decks}}");
+
+		var decklist = "{{decks}}".split("[~{");
+		
+		if("{{decks}}" == ""){ //need this because string split makes an empty string one value, when it should be zero
+			decklist = [];
+		};
 
 		var decklistDiv = document.getElementById('decks');
 
 		for (var i = 0; i < decklist.length; i++) {
 			
-			var deckDisplay = document.createElement("a");
-			deckDisplay.setAttribute("href", "{{session['username']}}/"+ decklist[i])
+			var deckDiv = document.createElement("div");
+			deckDiv.setAttribute("class", "deckdiv");
 			
-			deckDisplay.innerText = decklist[i];
-			
-			decklistDiv.appendChild(deckDisplay);
+			var deckLink = document.createElement("a");
+			deckLink.innerText = decklist[i] + "\n";
+			deckLink.setAttribute("href", "/deck/{{session['username']}}/"+ decklist[i])
+
+			deckDiv.appendChild(deckLink);
+			decklistDiv.appendChild(deckDiv);
 		
 		};
 
 	</script>
-
-	<br>
-
-	<div id="createnewdeck">
-		<a href="/newdeck" id="createdecktext"> Create New Deck </a>
-	</div>
-
-	<br>
-	
-	<div id="community">
-		<a href="/community"> Community Decks </a>
-	</div>
-	
-	<br>	
-
-	<div id="cards">
-		<a href="/cards"> See Cards </a>
-	</div>
 
 	<footer>
 		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
