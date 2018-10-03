@@ -8,15 +8,19 @@
 <body>
 
 	<header>
-		<!-- <a href="/" class="headerlink">Home</a> -->
-		<!-- <a href="/logout" class="headerlink">Log Out</a> -->
+		<a href="/" id="homebutton">Home</a>
+		<a href="/logout" class="logoutbutton">Log Out</a>
 	</header>
 
 	<br><br>
 
-	<p> The server has encountered an error. Don't worry, it's not your fault. Head back to the homepage <a href="/">here.</a> </p>
+	<p> 
+		The server has encountered an error: {{msg}} 
+		<br><br>
+		Don't worry, it's not your fault. Head back to the homepage <a href="/">here.</a> 
+	</p>
 
-	<img src="/static/notyourfault.png">
+	<img src="/static/notyourfault.png", style="width: 50%;">
 
 	<footer>
 		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>

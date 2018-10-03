@@ -1,18 +1,24 @@
+<!doctype html>
 
 <html>
 <head>
-	<title>Not Logged In</title>
+	<title>Method Not Allowed</title>
 	<link href="/static/style.css" rel="stylesheet">
 </head>
 <body>
 
 	<header>
 		<a href="/" id="homebutton">Home</a>
+		<a href="/logout" class="logoutbutton">Log Out</a>
 	</header>
 
 	<br><br>
 
-	<p>You are not logged in. <a href="/login">Log in</a> or <a href="/signup">create an account</a> to start building decks today.</p>
+	<p> 
+		{{msg}} 
+		<br><br>
+		Head back to the homepage <a href="/">here.</a> 
+	</p>
 
 	<footer>
 		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
@@ -20,3 +26,4 @@
 
 </body>
 </html>
+
