@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session, abort
 import pymysql.cursors
 import hashlib
 import requests
+import json
 
 ##
 #Table of Contents
@@ -79,37 +80,24 @@ def password_hash(unsecure_string):
 
 #self explanatory. checks to see if user is logged in. for pages like homepage/splash
 def loggedIn():
-	return 'email' in session
+	return 'email' in session	
 
 #given a query, returns a single row from the database that matches.
 #this method will return None for INSERT statements
 def fetchRecord(query, params):
-	try:
-		with connection.cursor() as cursor:
-			cursor.execute(query, params)
-			connection.commit()
-			return cursor.fetchone()
-	
-	except AttributeError:
-		print("attribute error")
-
-	return None	#exceptions hit this	
+	with connection.cursor() as cursor:
+		cursor.execute(query, params)
+		connection.commit()
+		return cursor.fetchone()
 
 
 #given a query, returns a single row from the database that matches.
 #this method will return () (an empty tuple) for INSERT statements
 def fetchAllRecords(query, params):
-	try:
-		with connection.cursor() as cursor:
-			cursor.execute(query, params)
-			connection.commit()
-			return cursor.fetchall() #the only difference is here
-	
-	except AttributeError:
-		print("attribute error")
-
-	return None	#exceptions hit this
-
+	with connection.cursor() as cursor:
+		cursor.execute(query, params)
+		connection.commit()
+		return cursor.fetchall() #the only difference is here
 
 
 
@@ -140,9 +128,14 @@ def main():
 #Login screen for entering credentials
 @site.route("/login")
 def loginPage():
+
+	if loggedIn():
+		return redirect('/homepage')
+
 	return render_template("login.html")
 
 #the action form for a login attempt. Checks with database for valid credentials.
+#if a user tries to GET this page, 405 error triggers.
 @site.route("/loginprocess", methods = ['POST'])
 def loginProcess():
 	
@@ -166,24 +159,20 @@ def loginProcess():
 #when a user enters invalid credentials
 @site.route('/loginfail')
 def loginFail():
+	if loggedIn():
+		return redirect('/homepage')
 	return render_template('/loginfail.html')
 
 #signup screen. enter new account details here.
 @site.route('/signup')
 def signupPage():
+	if loggedIn():
+		return redirect('/homepage')
 	return render_template('signup.html')
-
-#for new users, checks to see if the username/email they gave is already in use
-def infoTaken(username, email):
-
-	query = "SELECT * FROM deckerator.users WHERE username=%s OR email=%s"
-	params = (username, email)
-	row = fetchRecord(query, params)
-
-	return row != None #meaning there is a match, and the info IS taken.
 
 #the action form for signing up. 
 #Sends email, username, and password to the database IF everything was filled out correctly.
+#if a user tries to GET this page, 405 error triggers.
 @site.route('/signupprocess', methods=['POST'])
 def signupProcess():
 	username = request.form['username']
@@ -197,7 +186,10 @@ def signupProcess():
 	if password != repeatpw:
 		return render_template("error.html", back="/signup", name="Password Error", error="Incorrect repeat password.")
 
-	if infoTaken(username, email):
+	query = "SELECT * FROM deckerator.users WHERE username=%s OR email=%s"
+	params = (username, email)
+	row = fetchRecord(query, params)
+	if row != None:
 		return render_template("error.html", back="/signup", name="Account Error", error="That username or email was already used.")
 
 	#successful account creation!
@@ -236,19 +228,24 @@ def homepage():
 #then they are redirected back to the welcome page.
 @site.route('/logout')
 def logout():
-	del session['email']
-	del session['userid']
-	del session['username']
-	return redirect('/')
+	if loggedIn():
+		del session['email']
+		del session['userid']
+		del session['username']
+	
+	return redirect('/') # clever eh?
 
 @site.route('/settings')
 def settingsPage():
+	if not loggedIn(): return render_template("notloggedin.html")
 	return render_template("settings.html")	
 
 @site.route('/newdeck')
 def newDeckPage():
+	if not loggedIn(): return render_template("notloggedin.html")
 	return render_template("newdeck.html")
 
+#processing method for deck upload. 405 triggers on GET.
 @site.route('/submitdeck', methods=["POST"])
 def submitDeck():
 	#the decklist arrives, with each card name specified with a space
@@ -269,21 +266,34 @@ def submitDeck():
 	
 	deck = deck.split("\r\n")
 	
-	deckJSON = "{"
+	deckdict = {}
+
+	apostropheSpots = []
 
 	for card in deck:
-		deckJSON += "\""+card+"\":1," #needs proper formatting from list to dict
+		if card == "": continue #empty line
+		try:
+			deckdict[card] += 1
+		except KeyError:
+			deckdict[card] =  1
 
-	#TODO: actually count the cards and write in their counts, instead of having duplicates
-
-	deckJSON = deckJSON[:-1] + "}"	#drop the trailing comma and close the dict.
+	deckdict = json.dumps(deckdict) #to make it into valid json
+	
+	print(deckdict)
 
 	query = "INSERT INTO deckerator.decks (code, name, userid) VALUES (%s, %s, %s)"
-	params = (deckJSON, name, session["userid"])
+	params = (deckdict, name, session["userid"])
 	fetchRecord(query, params) #nothing is fetched, dumb name, but it does insert
-	
-	return render_template("deck.html", name=name, deck=deck)
 
+	# Now that the deck is uploaded, retrieve it with deckID
+
+	query = "SELECT deckid FROM deckerator.decks WHERE name=%s AND userid=%s"
+	params = (name, session["userid"])
+	deckData = fetchRecord(query, params)
+	
+	return redirect("/deck/"+deckData[0])
+	
+#processing method for deck deletion. 405 triggers on GET.
 @site.route('/deletedeck', methods=["POST"])
 def deleteDeck():
 	name = request.form["name"]
@@ -294,6 +304,7 @@ def deleteDeck():
 
 	return render_template("deckdeleted.html")	
 
+#processing method for deck updation. 405 triggers on GET.
 @site.route('/editdeck', methods=["POST"])
 def editDeck():
 	name = request.form["name"]
@@ -322,7 +333,7 @@ def editDeck():
 
 	return render_template("editdeck.html", name=name, deck=deckString, deckid=deckid)
 
-
+#processing method for deck reupload. 405 triggers on GET.
 @site.route('/resubmitdeck', methods=["POST"])
 def resubmitDeck():
 	#the decklist arrives, with each card name specified with a space
@@ -341,12 +352,13 @@ def resubmitDeck():
 	deckdict = {}
 
 	for card in deck:
+		if card == "": continue #empty line
 		try:
 			deckdict[card] += 1
 		except KeyError:
 			deckdict[card] = 1
 
-	deckdict = str(deckdict).replace("\'", "\"") #to make it  into valid json
+	deckdict = json.dumps(deckdict) #to make it into valid json
 
 	query = "UPDATE deckerator.decks SET code=%s, name=%s WHERE deckid=%s"
 	params = (deckdict, name, deckid)
@@ -356,6 +368,8 @@ def resubmitDeck():
 
 @site.route("/deck/<deckid>")
 def deckview(deckid):
+
+	#its ok if someone whos not logged in sees this, no need for the check
 
 	# get decklist from server based on username and deckname.
 	query = "SELECT name, code FROM deckerator.decks WHERE deckid=%s"
@@ -389,11 +403,16 @@ def deckview(deckid):
 
 #404 error page not found.
 @site.errorhandler(404)
-def handle404(idk):
-	return render_template("404error.html"), 404
+def handle404(msg):
+	return render_template("404error.html", msg=msg), 404
+
+#405 error method not allowed.
+@site.errorhandler(405)
+def handle405(msg):
+	return render_template("405error.html", msg=msg), 405
 
 #500 error server error. this one's my bad.
 @site.errorhandler(500)
-def handle500(idk):
-	return render_template("500error.html"), 500
+def handle500(msg):
+	return render_template("500error.html", msg=msg), 500
 
