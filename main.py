@@ -85,20 +85,43 @@ def loggedIn():
 #given a query, returns a single row from the database that matches.
 #this method will return None for INSERT statements
 def fetchRecord(query, params):
-	with connection.cursor() as cursor:
-		cursor.execute(query, params)
-		connection.commit()
-		return cursor.fetchone()
+	global connection
+	try:
+		with connection.cursor() as cursor:
+			cursor.execute(query, params)
+			connection.commit()
+			return cursor.fetchone()
+	except (ConnectionAbortedError, pymysql.err.InterfaceError, pymysql.err.OperationalError):
+		try:
+			connection = pymysql.connect(
+				host = host,
+				user = user,
+				password=password,
+				db = db
+			)
+		except:
+			print("sql connection failed. Undo try block for info")
 
 
 #given a query, returns a single row from the database that matches.
 #this method will return () (an empty tuple) for INSERT statements
 def fetchAllRecords(query, params):
-	with connection.cursor() as cursor:
-		cursor.execute(query, params)
-		connection.commit()
-		return cursor.fetchall() #the only difference is here
-
+	global connection
+	try:
+		with connection.cursor() as cursor:
+			cursor.execute(query, params)
+			connection.commit()
+			return cursor.fetchall() # NOTE THE "ALL"
+	except (ConnectionAbortedError, pymysql.err.InterfaceError, pymysql.err.OperationalError):
+		try:
+			connection = pymysql.connect(
+				host = host,
+				user = user,
+				password=password,
+				db = db
+			)
+		except:
+			print("sql connection failed. Undo try block for info")
 
 
 
