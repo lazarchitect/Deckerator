@@ -2,7 +2,7 @@
 
 <html>
 <head>
-	<title>{{name}}</title>
+	<title>Edit {{name}}</title>
 	<link href="/static/style.css" rel="stylesheet">
 	<link rel="icon" href="/static/favicon.png">
 </head>
@@ -10,6 +10,7 @@
 
 
 	<header>
+		<a href="/" id="homebutton"> Home </a>
 		<a href="/settings" class="settingsbutton"> Account Settings </a>
 		<a href="/logout" class="logoutbutton"> Log Out </a>
 	</header>
@@ -30,8 +31,12 @@
 			
 			Http.onreadystatechange=(e)=>{
 				var response = Http.responseText;
+
+				console.log(response);
+
 				var obj = JSON.parse(response);
 				imageURL = obj.image_uris.normal;
+				cardName = obj.name;
 				document.getElementById('cardspot').setAttribute("src", imageURL);
 				document.getElementById('cardtext').innerText = "Click on the card to add it to your deck.";
 				document.getElementById('cardspot').setAttribute("onclick", "addToList(\"" + cardName+ "\")");
@@ -40,7 +45,47 @@
 
 
 		function addToList(cardName){
-			document.getElementById("decklist").innerHTML += cardName + "\n";
+
+			var A = document.getElementById("decklist").innerHTML.split("\n").slice(0,-1); //need to drop the final newline
+
+			console.log(A);
+
+			for (var i = 0; i < A.length; i++) {
+				var tokens = A[i].split(" ");
+				var firstToken = tokens[0];
+				
+				var count = parseInt(firstToken);
+
+				var name;
+
+				if (!(count < 20000000000000000)){ //THIS IS JUST TO CHECK IF ITS A NUMBER OR NOT. NAN<ANY_INT WILL RETURN FALSE. _MOST_ NUMBERS WILL NOT. 
+					console.log("count is nan");
+					count = 0;
+					name = A[i];
+				}
+				else{	
+					console.log("count is NOT nan");
+					name = "";
+					for (var token_i = 1; token_i < tokens.length; token_i++){
+						name += tokens[token_i] + " ";
+					}
+					name = name.substring(0, name.length - 1);
+					
+				}
+				console.log("cardname is " + cardName + ". name is " + name + ".")
+				if (cardName === name){
+					
+					A[i] = (count + 1) + " " + name;
+					
+					var retval = "";
+					for (var lineIndex in A){
+						retval += A[lineIndex] + "\n";
+					}
+					document.getElementById("decklist").innerHTML = retval;
+					return;
+				}
+			}
+			document.getElementById("decklist").innerHTML += "1 " + cardName + "\n";
 		}
 
 
@@ -57,7 +102,7 @@
 
 	<div>
 		<div id="cardtext"></div>
-		<img src="" id="cardspot" style="background-color: black; width: 18%; height: 36%; border-radius: 5%;">
+		<img id="cardspot" style="width: 18%; height: 36%; border-radius: 5%;">
 	</div>
 
 	<span id="decklistzone">
@@ -70,20 +115,18 @@
 	</span>
 
 	<script type="text/javascript">
-		var rawDeckList = "{{deck}}";
-		var DeckList = rawDeckList.split("[~{");
-		for (var i = 0; i < DeckList.length; i++) {
-			document.getElementById('decklist').innerHTML += DeckList[i] + "\n"; 
-		};
-		
+		var decklist = JSON.parse({{ deck|tojson|safe }});
+		for (var card in decklist){
+			document.getElementById('decklist').innerHTML += (decklist[card] + " " + card + "\n");
+		}
 	</script>
 
 	<!-- for later: deck analysis box with mana curve, colors, land base, price, etc -->
 
 	<!-- for later: card recommender based on mana curve fit, colors, mechanics?? -->
-	<footer>
+	<!-- <footer>
 		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
-	</footer>
+	</footer> -->
 
 
 </body>

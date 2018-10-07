@@ -32,6 +32,7 @@
 				var response = Http.responseText;
 				var obj = JSON.parse(response);
 				imageURL = obj.image_uris.normal;
+				cardName = obj.name;
 				document.getElementById('cardspot').setAttribute("src", imageURL);
 				document.getElementById('cardtext').innerText = "Click on the card to add it to your deck.";
 				document.getElementById('cardspot').setAttribute("onclick", "addToList(\"" + cardName+ "\")");
@@ -40,7 +41,47 @@
 
 
 		function addToList(cardName){
-			document.getElementById("decklist").innerHTML += cardName + "\n";
+
+			var A = document.getElementById("decklist").innerHTML.split("\n").slice(0,-1); //need to drop the final newline
+
+			console.log(A);
+
+			for (var i = 0; i < A.length; i++) {
+				var tokens = A[i].split(" ");
+				var firstToken = tokens[0];
+				
+				var count = parseInt(firstToken);
+
+				var name;
+
+				if (!(count < 20000000000000000)){ //THIS IS JUST TO CHECK IF ITS A NUMBER OR NOT. NAN<ANY_INT WILL RETURN FALSE. _MOST_ NUMBERS WILL NOT. 
+					console.log("count is nan");
+					count = 0;
+					name = A[i];
+				}
+				else{	
+					console.log("count is NOT nan");
+					name = "";
+					for (var token_i = 1; token_i < tokens.length; token_i++){
+						name += tokens[token_i] + " ";
+					}
+					name = name.substring(0, name.length - 1);
+					
+				}
+				console.log("cardname is " + cardName + ". name is " + name + ".")
+				if (cardName === name){
+					
+					A[i] = (count + 1) + " " + name;
+					
+					var retval = "";
+					for (var lineIndex in A){
+						retval += A[lineIndex] + "\n";
+					}
+					document.getElementById("decklist").innerHTML = retval;
+					return;
+				}
+			}
+			document.getElementById("decklist").innerHTML += "1 " + cardName + "\n";
 		}
 
 
@@ -57,16 +98,16 @@
 
 	<div>
 		<div id="cardtext"></div>
-		<img src="" id="cardspot" style="background-color: black; width: 18%; height: 36%; border-radius: 5%;">
+		<img id="cardspot" style="width: 18%; height: 36%; border-radius: 5%;">
 	</div>
 
-	<span id="decklistzone">
+	<div id="decklistzone">
 		<form id="formid" action="submitdeck" method="POST">
 			Deck name (required): <input type="text" name="name">
 			<textarea name="deck" rows=25 cols=25 id="decklist" form="formid"></textarea>
 			<button type="submit"> Upload Deck </button>
 		</form>
-	</span>
+	</div>
 	
 
 

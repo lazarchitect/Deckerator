@@ -3,6 +3,7 @@ import pymysql.cursors
 import hashlib
 import requests
 import json
+import time
 
 ##
 #Table of Contents
@@ -62,7 +63,7 @@ try:
 		password=password,
 		db = db)
 except:
-	print("sql connection failed. Undo try block for info")
+	print("-------------------------\n\nDatabase down!\n\n-------------------------")
 
 ##############################
 #HELPER METHODS
@@ -99,8 +100,12 @@ def fetchRecord(query, params):
 				password=password,
 				db = db
 			)
+			return fetchRecord(query, params)
 		except:
-			print("sql connection failed. Undo try block for info")
+			return render_template("sqldberror.html")
+	
+	except AttributeError: #this ones serious. the connection cant be made at all
+		return render_template("sqldberror.html")
 
 
 #given a query, returns a single row from the database that matches.
@@ -112,7 +117,8 @@ def fetchAllRecords(query, params):
 			cursor.execute(query, params)
 			connection.commit()
 			return cursor.fetchall() # NOTE THE "ALL"
-	except (ConnectionAbortedError, pymysql.err.InterfaceError, pymysql.err.OperationalError):
+	except (ConnectionAbortedError, pymysql.err.InterfaceError, pymysql.err.OperationalError) as e:
+		# print("sql connection failed as " + str(e) + ". Reupping now.")
 		try:
 			connection = pymysql.connect(
 				host = host,
@@ -120,8 +126,27 @@ def fetchAllRecords(query, params):
 				password=password,
 				db = db
 			)
+			return fetchAllRecords(query, params) #NOTE THE 'ALL'
 		except:
-			print("sql connection failed. Undo try block for info")
+			return render_template("sqldberror.html")
+
+	except AttributeError: #this ones serious. the connection cant be made at all
+		return render_template("sqldberror.html")
+
+#given a card name that has the number at the end, strip it and return just the name
+def dropCount(cardRaw):
+	retval = ""
+	cardNameList = cardRaw.split(" ")[1:]
+	for i in cardNameList:
+		retval += (i + " ")
+	return retval[:-1] #drop final space added.	
+
+def StringAllColors(colorList):
+	retval = ""
+	for i in colorList:
+		retval += i
+	
+	return "C" if retval=="" else retval	
 
 
 
@@ -272,10 +297,10 @@ def newDeckPage():
 @site.route('/submitdeck', methods=["POST"])
 def submitDeck():
 	#the decklist arrives, with each card name specified with a space
-	deck = request.form["deck"]
+	deckRaw = request.form["deck"]
 	name = request.form["name"]
 	
-	if deck=="" or name=="":
+	if deckRaw=="" or name=="":
 		return "You can't leave the decklist or deck name blank. Go back and try again."
 	
 	#this block checks for duplicates based on its name. makes it possible to delete a deck later.
@@ -287,22 +312,70 @@ def submitDeck():
 	if collision != None:
 		return render_template("error.html", back="/newdeck", name="Deck Name Error", error="A single user can't have two decks with the same name.")
 	
-	deck = deck.split("\r\n")
+	deckRawList = deckRaw.split("\r\n")
 	
 	deckdict = {}
 
-	apostropheSpots = []
+	for cardRaw in deckRawList:
 
-	for card in deck:
-		if card == "": continue #empty line
+		cardRaw = cardRaw.strip()
+
+		if cardRaw == "": continue #empty line
+		
+		# check if last 'word' is a parsable integer. 
+		# if so, run the try block that many times with the rest of the line.
+		# else, run it once with the whole line.
+
 		try:
-			deckdict[card] += 1
+			count = int(cardRaw.split(" ")[0])
+			cardName = dropCount(cardRaw)
+		except ValueError:
+			count = 1
+			cardName = cardRaw
+
+		try:
+			deckdict[cardName] += count
 		except KeyError:
-			deckdict[card] =  1
+			deckdict[cardName] = count
+
+		query = "SELECT cardid FROM deckerator.cards WHERE name=%s"
+		params = (cardName)
+		
+		if fetchRecord(query, params) == None:
+
+			cardData = requests.get("https://api.scryfall.com/cards/named?fuzzy=" + cardName).json()
+			####### GET CARD COLOR, CMC, TYPE, AND ART FROM SCRYFALL
+
+			try:
+				if cardData['status'] == 404:
+					###A GIVEN CARD DOESNT EXIST!
+					return render_template("error.html", 
+						name="Invalid Card Name", 
+						back="javascript:history.back()", 
+						error="The card name \"" + cardName + "\" is invalid. No such card exists.")
+			except:
+				pass #this is fine, the 'status' wont even appear if the request is valid, because it returns a card object
+
+			time.sleep(0.1)
+			####### SLEEP .1 SECONDS
+
+			cardColor= StringAllColors(cardData['colors'])
+			cardCmc  = cardData['cmc']
+			cardType = cardData['type_line']
+			cardArtUrl = cardData['image_uris']['normal']
+
+			query = "INSERT INTO deckerator.cards (name, color, cmc, type, art_url) VALUES (%s, %s, %s, %s, %s)"
+			params = (cardName, cardColor, cardCmc, cardType, cardArtUrl)
+			fetchRecord(query, params)
+			####### INSERT IT INTO MY DATABASE
+			
+
+
+
+		# if the if failed, that means we have the card already, no worries fam
+
 
 	deckdict = json.dumps(deckdict) #to make it into valid json
-	
-	print(deckdict)
 
 	query = "INSERT INTO deckerator.decks (code, name, userid) VALUES (%s, %s, %s)"
 	params = (deckdict, name, session["userid"])
@@ -313,8 +386,8 @@ def submitDeck():
 	query = "SELECT deckid FROM deckerator.decks WHERE name=%s AND userid=%s"
 	params = (name, session["userid"])
 	deckData = fetchRecord(query, params)
-	
-	return redirect("/deck/"+deckData[0])
+
+	return redirect("/deck/"+str(deckData[0]))
 	
 #processing method for deck deletion. 405 triggers on GET.
 @site.route('/deletedeck', methods=["POST"])
@@ -327,32 +400,31 @@ def deleteDeck():
 
 	return render_template("deckdeleted.html")	
 
-#processing method for deck updation. 405 triggers on GET.
+#processing method for deck updation.
 @site.route('/editdeck', methods=["POST"])
 def editDeck():
+
+	if not loggedIn():
+		return render_template("notloggedin.html")	
+
 	name = request.form["name"]
 	
-	query = "SELECT code, deckid FROM deckerator.decks WHERE name=%s AND userid=%s"
+	query = "SELECT code, deckid, userid FROM deckerator.decks WHERE name=%s AND userid=%s"
 	params = (name, session['userid'])
 	deckData = fetchRecord(query, params)
 
 	if deckData == None:
-		return "deckData is none?" #this could happen due to sql server down, or the deck was never uploaded?
+		return "deckData is none?" #this could happen due to sql server down, or the deck was never uploaded? 
 
-	print(str(deckData) + " is deckdata")
+	if deckData[2] != session['userid']:
+		return "You are not the owner of this deck. Go back to the homepage. Please report this bug to eddie.lazar@yahoo.com." #failsafe, shouldnt happen
 
 	#deck is a tuple whos first element is a str representation of a dict (lol)
 
 	deck = eval(deckData[0]) #turn it into a dict
 	deckid = deckData[1]
 
-	deckString = ""
-
-	for card in deck:
-		for count in range(deck[card]):
-			deckString += card + DELIMITER
-
-	deckString = deckString[:-3] #drop final delimiter	
+	deckString = json.dumps(deck)
 
 	return render_template("editdeck.html", name=name, deck=deckString, deckid=deckid)
 
@@ -360,26 +432,78 @@ def editDeck():
 @site.route('/resubmitdeck', methods=["POST"])
 def resubmitDeck():
 	#the decklist arrives, with each card name specified with a space
-	deck = request.form["deck"]
+	deckRaw = request.form["deck"]
 	name = request.form["name"]
 	deckid = request.form["deckid"]
 	
-	if deck=="":
+	if deckRaw=="":
 		return render_template("error.html", name="Deck Edit Error", back="/editdeck", error="You can't leave the decklist blank.")
 
 	if name=="":
 		return render_template("error.html", name="Name Edit Error", back="/editdeck", error="You can't leave the deck name blank.")
 
-	deck = deck.split("\r\n")
+	#this block checks for duplicates based on its name. makes it possible to delete a deck later.
+	
+	query = "SELECT * FROM deckerator.decks WHERE name=%s AND userid=%s AND deckid!=%s" #check for new name, this userid, NOT this deckid
+	params = (name, str(session['userid']), deckid)
+	collision = fetchRecord(query, params)
+	
+	if collision != None:
+		return render_template("error.html", back="javascript:history.back()", name="eDck Name Error", error="A single user can't have two decks with the same name.")
+
+	deckRawList = deckRaw.split("\r\n")
 	
 	deckdict = {}
 
-	for card in deck:
-		if card == "": continue #empty line
+	for cardRaw in deckRawList:
+
+		cardRaw = cardRaw.strip()
+		
+		if cardRaw == "": continue #empty line
+
 		try:
-			deckdict[card] += 1
+			count = int(cardRaw.split(" ")[0])
+			cardName = dropCount(cardRaw)
+		except ValueError:
+			count = 1
+			cardName = cardRaw
+
+		try:
+			deckdict[cardName] += count
 		except KeyError:
-			deckdict[card] = 1
+			deckdict[cardName] =  count
+
+		query = "SELECT cardid FROM deckerator.cards WHERE name=%s"
+		params = (cardName)
+		
+		if fetchRecord(query, params) == None:
+
+			cardData = requests.get("https://api.scryfall.com/cards/named?fuzzy=" + cardName).json()
+			####### GET CARD COLOR, CMC, TYPE, AND ART FROM SCRYFALL
+			
+			try:
+				if cardData['status'] == 404:
+					###A GIVEN CARD DOESNT EXIST!
+					return render_template("error.html", 
+						name="Invalid Card Name", 
+						back="javascript:history.back()", 
+						error="The card name \"" + cardName + "\" is invalid. No such card exists.")
+			except:
+				pass #this is fine, the 'status' wont even appear if the request is valid, because it returns a card object
+
+
+			time.sleep(0.1)
+			####### SLEEP .1 SECONDS TO BE NICE TO SCRYFALL
+
+			cardColor= StringAllColors(cardData['colors'])
+			cardCmc  = cardData['cmc']
+			cardType = cardData['type_line']
+			cardArtUrl = cardData['image_uris']['normal']
+
+			query = "INSERT INTO deckerator.cards (name, color, cmc, type, art_url) VALUES (%s, %s, %s, %s, %s)"
+			params = (cardName, cardColor, cardCmc, cardType, cardArtUrl)
+			fetchRecord(query, params)
+			####### INSERT IT INTO MY DATABASE	
 
 	deckdict = json.dumps(deckdict) #to make it into valid json
 
@@ -401,6 +525,8 @@ def deckview(deckid):
 
 	if deck==None: #no such deck exists
 		abort(404)
+
+	#FOR EACH CARD NAME: GET ITS TYPE, COLOR, CMC, ART URL, SEND THAT TO CLIENT AS JSON. EZ ENUFF ON THIS SIDE...	
 
 	return render_template("deck.html", name=deck[0], deck=deck[1])
 
