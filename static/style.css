@@ -1,6 +1,5 @@
 body{
 	background-color: #8ED2FF;
-	padding-left: 5%;
 }
 
 header{
@@ -46,14 +45,13 @@ p{
 }
 
 
-footer{
-	height: 60px;
+#footer{
+	left: -1%;
+	height: 50px;
 	background-color: #00A7AD;
-	width: 100%;
-	height: 20px;
-	position: absolute;
+	width: 101%;
+	/*position: absolute;*/
 	bottom: 0px;
-	left: 1px;
 }
 
 #footertext{
@@ -110,16 +108,24 @@ FOR HOMEPAGE
 	top: 20%;
 	position: absolute;
 	width: 30%;
-	height: 75%;
-	overflow: scroll;
+	height: 70%;
+	overflow: auto;
+	overflow-x: hidden;
 	background-color: white;
 }
 
 .deckdiv{
+
+	position: static;
 	margin-top: 2%;
-	height: 10%;
-	border-radius: 5%;
-	background-color: black;
+	height: 8%;
+	background-color: maroon;
+	border: 3px solid black;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.deckdiv > a {
 	color: white;
 }
 
@@ -138,7 +144,7 @@ FOR HOMEPAGE
 
 
 /*
-FOR NEWDECK
+FOR NEWDECK + EDITDECK
 */
 
 #decklistzone{
@@ -149,6 +155,7 @@ FOR NEWDECK
 
 #decklist{
 	overflow: auto;
+	width: 32%;
 }
 
 
