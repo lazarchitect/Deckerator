@@ -446,7 +446,7 @@ def resubmitDeck():
 		return render_template("error.html", name="Deck Edit Error", back="/editdeck", error="You can't leave the decklist blank.")
 
 	if name=="":
-		return render_template("error.html", name="Name Edit Error", back="/editdeck", error="You can't leave the deck name blank.")
+		return render_template("error.html", name="Deck Edit Error", back="/editdeck", error="You can't leave the deck name blank.")
 
 	#this block checks for duplicates based on its name. makes it possible to delete a deck later.
 	
@@ -455,7 +455,7 @@ def resubmitDeck():
 	collision = fetchRecord(query, params)
 	
 	if collision != None:
-		return render_template("error.html", back="javascript:history.back()", name="eDck Name Error", error="A single user can't have two decks with the same name.")
+		return render_template("error.html", back="javascript:history.back()", name="Deck Edit Error", error="You can't have two decks with the same name.")
 
 	deckRawList = deckRaw.split("\r\n")
 	
@@ -548,8 +548,34 @@ def deckview(deckid):
 
 
 
+#############   SETTINGS   ###############
 
+@site.route("/changeusername", methods=["POST"])
+def changeUsername():
+	newUsername = request.form["newUsername"]
+	oldUsername = session['username']
 
+	#FIRST, CHECK FOR USERNAME TAKEN
+
+	query = "SELECT username FROM deckerator.users WHERE username=%s"
+	params = (newUsername)
+	collision = fetchRecord(query, params)	
+
+	if collision == None: #not found? good to go
+		query = "UPDATE deckerator.users SET username=%s WHERE username=%s"
+		params = (newUsername, oldUsername)
+		fetchRecord(query, params)
+		#success!
+		session['username'] = newUsername #one last thing...
+		return redirect("/settings")
+
+	elif collision[0] == oldUsername: #found and its YOU?
+		return render_template("error.html", back="javascript:history.back()", name="Username Error", error="Uh. That's the same name as before.")	
+
+	else: #found and its someone else
+		return render_template("error.html", back="javascript:history.back()", name="Username Error", error="That username is already taken. Sorry.")
+
+	
 
 
 

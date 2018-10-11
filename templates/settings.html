@@ -30,10 +30,10 @@
 	<p>
 		Username: {{session['username']}}
 		<button onclick="changeUsername()">Change Username</button>
-		<form id="usernameForm" style="display: none;" action="change">
+		<form id="usernameForm" style="display: none;" action="changeusername" method="POST">
 			Type new username here.
 			<input type="text" name="newUsername">
-			<input type="submit">
+			<button type="submit"> Submit </button>
 		</form>
 	</p>
 
