@@ -30,9 +30,17 @@
 			//TODO: ADD SECTIONS FOR CREATURE, ARTIFACT, ETC. AND POPULATE THOSE. JINJA NEEDS TO SEND THAT DATA TO THE CLIENT.
 
 			var deckdiv = document.getElementById('deck');
-			var jsObj = JSON.parse({{ deck|tojson|safe }});
-			for(var i in jsObj){
-				deckdiv.innerText += jsObj[i] + " " + i + "\n";
+			var decklistObj = JSON.parse({{ deck|tojson|safe }});
+			var cardInfoObj = JSON.parse({{ info|tojson|safe }});
+			
+			//decklistObj is a list of card:count pairs
+			//cardInfoObj is a list of card:info_list pairs
+
+			for(var card in decklistObj){
+				// console.log(cardInfoObj[card]);
+				// if(cardInfoObj[card][2].includes("Creature")){
+				deckdiv.innerText += decklistObj[card] + " " + card + "\n";
+				// }
 			}
 
 
@@ -44,13 +52,20 @@
 					submitForm.setAttribute("method", "post");
 					submitForm.setAttribute("style", "display: none;");
 
-				var input = document.createElement("input");
-					input.setAttribute("type", "text");
-					input.setAttribute("name", "name");
-					input.setAttribute("value", "{{name}}");
-					input.setAttribute("style", "display: none;");
+				var deckname = document.createElement("input");
+					deckname.setAttribute("type", "text");
+					deckname.setAttribute("name", "name");
+					deckname.setAttribute("value", "{{name}}");
+					deckname.setAttribute("style", "display: none;");
 
-				submitForm.appendChild(input);
+				var deckOwner = document.createElement("input");
+					deckOwner.setAttribute("type", "text");
+					deckOwner.setAttribute("name", "deckOwner");
+					deckOwner.setAttribute("value", "{{deckOwner}}");
+					deckOwner.setAttribute("style", "display: none;");	
+
+				submitForm.appendChild(deckname);
+				submitForm.appendChild(deckOwner);
 				
 				document.body.appendChild(submitForm);
 				submitForm.submit();
@@ -71,9 +86,12 @@
 
 		</script>
 
-		<button onclick="editdeck()"> Edit Deck </button>
 
-		<button onclick="deletedeck()"> Delete Deck </button>
+		{% if owner %}
+			<button onclick="editdeck()"> Edit Deck </button>
+
+			<button onclick="deletedeck()"> Delete Deck </button>
+		{% endif %}
 
 	</div>
 

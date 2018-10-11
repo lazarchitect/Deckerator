@@ -294,6 +294,7 @@ def newDeckPage():
 	return render_template("newdeck.html")
 
 #processing method for deck upload. 405 triggers on GET.
+#Can only arrive here from newdeck.html.
 @site.route('/submitdeck', methods=["POST"])
 def submitDeck():
 	#the decklist arrives, with each card name specified with a space
@@ -387,12 +388,19 @@ def submitDeck():
 	params = (name, session["userid"])
 	deckData = fetchRecord(query, params)
 
-	return redirect("/deck/"+str(deckData[0]))
+	deckid = deckData[0]
+
+	return redirect("/deck/"+str(deckid))
 	
 #processing method for deck deletion. 405 triggers on GET.
 @site.route('/deletedeck', methods=["POST"])
 def deleteDeck():
 	name = request.form["name"]
+	deckOwner = request.form["deckOwner"]
+
+	if deckOwner != session['userid']:
+		#user tried to delete a deck that doesnt belong to them 
+		return "You are not the owner of this deck. Go back to the homepage. Please report this bug to eddie.lazar@yahoo.com." #failsafe
 	
 	query = "DELETE FROM deckerator.decks WHERE name=%s AND userid=%s"
 	params = (name, session['userid'])
@@ -414,12 +422,10 @@ def editDeck():
 	deckData = fetchRecord(query, params)
 
 	if deckData == None:
-		return "deckData is none?" #this could happen due to sql server down, or the deck was never uploaded? 
+		#deck with that name not found for this user AKA user tried to edit a deck that doesnt belong to them 
+		return "You are not the owner of this deck. Go back to the homepage. Please report this bug to eddie.lazar@yahoo.com." #failsafe
 
-	if deckData[2] != session['userid']:
-		return "You are not the owner of this deck. Go back to the homepage. Please report this bug to eddie.lazar@yahoo.com." #failsafe, shouldnt happen
-
-	#deck is a tuple whos first element is a str representation of a dict (lol)
+	#deck is a tuple. First element is a string representation of a dict (lol)
 
 	deck = eval(deckData[0]) #turn it into a dict
 	deckid = deckData[1]
@@ -519,16 +525,26 @@ def deckview(deckid):
 	#its ok if someone whos not logged in sees this, no need for the check
 
 	# get decklist from server based on username and deckname.
-	query = "SELECT name, code FROM deckerator.decks WHERE deckid=%s"
+	query = "SELECT name, code, userid FROM deckerator.decks WHERE deckid=%s"
 	params = (deckid)
-	deck = fetchRecord(query, params)
+	deckData = fetchRecord(query, params)
 
-	if deck==None: #no such deck exists
+	if deckData==None: #no such deck exists
 		abort(404)
 
-	#FOR EACH CARD NAME: GET ITS TYPE, COLOR, CMC, ART URL, SEND THAT TO CLIENT AS JSON. EZ ENUFF ON THIS SIDE...	
+	#FOR EACH CARD NAME: GET ITS TYPE, COLOR, CMC, ART URL, SEND THAT TO CLIENT AS JSON. 
 
-	return render_template("deck.html", name=deck[0], deck=deck[1])
+	cardInfoDict = {}
+
+	for cardName in json.loads(deckData[1]):
+		query = "SELECT name, color, cmc, type, art_url FROM deckerator.cards WHERE name=%s"
+		params = (cardName)
+		cardData = fetchRecord(query, params)
+		cardInfoDict[cardName] = cardData[1:]
+
+	InfoPackage = json.dumps(cardInfoDict)
+
+	return render_template("deck.html", name=deckData[0], deck=deckData[1], info=InfoPackage, owner=(deckData[2]==session['userid']))
 
 
 
