@@ -17,13 +17,33 @@
 
 		<p>{{name}}</p>
 
-		<div id="deck">
+		<div id="deck" style="height: 60%; overflow: scroll">
 
 
 
 		</div>
 
 		<script type="text/javascript">
+
+			function isEmpty(obj) {
+			    for(var key in obj) {
+        			if(obj.hasOwnProperty(key)){
+        				return false;
+    				}
+    			}
+    			return true;
+			}
+
+			function populateList(obj, name){
+				if (isEmpty(obj) === false){
+					deckdiv.innerHTML += "<b>" + name + "</b><br>";
+					for (var k in obj){
+						deckdiv.innerHTML += obj[k] + " " + k + "<br>";
+					}
+					deckdiv.innerHTML += "<br>";
+				}
+			}
+
 
 			//CODE TO POPULATE DECK
 
@@ -36,12 +56,47 @@
 			//decklistObj is a list of card:count pairs
 			//cardInfoObj is a list of card:info_list pairs
 
+			var Creatures = {};
+			var Artifacts = {};
+			var Enchantments = {};
+			var Instants = {};
+			var Sorceries = {};
+			var Lands = {};
+			var Planeswalkers = {};
+
 			for(var card in decklistObj){
-				// console.log(cardInfoObj[card]);
-				// if(cardInfoObj[card][2].includes("Creature")){
-				deckdiv.innerText += decklistObj[card] + " " + card + "\n";
-				// }
+				var typeline = cardInfoObj[card][2];
+				
+				if(typeline.includes("Creature")){
+					Creatures[card] = decklistObj[card];
+				}
+				else if (typeline.includes("Artifact")){
+					Artifacts[card] = decklistObj[card];
+				}
+				else if (typeline.includes("Enchantment")){
+					Enchantments[card] = decklistObj[card];
+				}
+				else if (typeline.includes("Instant")){
+					Instants[card] = decklistObj[card];
+				}
+				else if (typeline.includes("Sorcery")){
+					Sorceries[card] = decklistObj[card];
+				}
+				else if (typeline.includes("Land")){
+					Lands[card] = decklistObj[card];
+				}
+				else if (typeline.includes("Planeswalker")){
+					Planeswalkers[card] = decklistObj[card];
+				}
 			}
+
+			populateList(Creatures, "Creatures");
+			populateList(Artifacts, "Artifacts");
+			populateList(Enchantments, "Enchantments");
+			populateList(Instants, "Instants");
+			populateList(Sorceries, "Sorceries");
+			populateList(Lands, "Lands");
+			populateList(Planeswalkers, "Planeswalkers");
 
 
 			//send in a form with the deck's name to a flask page
