@@ -148,7 +148,32 @@ def StringAllColors(colorList):
 	
 	return "C" if retval=="" else retval	
 
+def scryfallGetCard(cardName):
+	cardData = requests.get("https://api.scryfall.com/cards/named?fuzzy=" + cardName).json()
+	####### GET CARD COLOR, CMC, TYPE, AND ART FROM SCRYFALL
+			
+	try:
+		if cardData['status'] == 404:
+			###A GIVEN CARD DOESNT EXIST!
+			return render_template("error.html", 
+				name="Invalid Card Name", 
+				back="javascript:history.back()", 
+				error="The card name \"" + cardName + "\" is invalid. No such card exists.")
+	except:
+		pass #this is fine, the 'status' wont even appear if the request is valid, because it returns a card object, not a response object
 
+	time.sleep(0.1)
+	####### SLEEP .1 SECONDS TO BE NICE TO SCRYFALL
+
+	cardColor= StringAllColors(cardData['colors'])
+	cardCmc  = cardData['cmc']
+	cardType = cardData['type_line']
+	cardArtUrl = cardData['image_uris']['normal']
+
+	query = "INSERT INTO deckerator.cards (name, color, cmc, type, art_url) VALUES (%s, %s, %s, %s, %s)"
+	params = (cardName, cardColor, cardCmc, cardType, cardArtUrl)
+	fetchRecord(query, params)
+	####### INSERT IT INTO MY DATABASE	
 
 
 
@@ -343,37 +368,9 @@ def submitDeck():
 		params = (cardName)
 		
 		if fetchRecord(query, params) == None:
-
-			cardData = requests.get("https://api.scryfall.com/cards/named?fuzzy=" + cardName).json()
-			####### GET CARD COLOR, CMC, TYPE, AND ART FROM SCRYFALL
-
-			try:
-				if cardData['status'] == 404:
-					###A GIVEN CARD DOESNT EXIST!
-					return render_template("error.html", 
-						name="Invalid Card Name", 
-						back="javascript:history.back()", 
-						error="The card name \"" + cardName + "\" is invalid. No such card exists.")
-			except:
-				pass #this is fine, the 'status' wont even appear if the request is valid, because it returns a card object
-
-			time.sleep(0.1)
-			####### SLEEP .1 SECONDS
-
-			cardColor= StringAllColors(cardData['colors'])
-			cardCmc  = cardData['cmc']
-			cardType = cardData['type_line']
-			cardArtUrl = cardData['image_uris']['normal']
-
-			query = "INSERT INTO deckerator.cards (name, color, cmc, type, art_url) VALUES (%s, %s, %s, %s, %s)"
-			params = (cardName, cardColor, cardCmc, cardType, cardArtUrl)
-			fetchRecord(query, params)
-			####### INSERT IT INTO MY DATABASE
+			scryfallGetCard(cardName)
 			
-
-
-
-		# if the if failed, that means we have the card already, no worries fam
+		# if this check failed, that means we have the card already, no worries fam
 
 
 	deckdict = json.dumps(deckdict) #to make it into valid json
@@ -396,7 +393,7 @@ def submitDeck():
 @site.route('/deletedeck', methods=["POST"])
 def deleteDeck():
 	name = request.form["name"]
-	deckOwner = request.form["deckOwner"]
+	deckOwner = int(request.form["deckOwner"]) #comes in as string
 
 	if deckOwner != session['userid']:
 		#user tried to delete a deck that doesnt belong to them 
@@ -482,34 +479,8 @@ def resubmitDeck():
 		query = "SELECT cardid FROM deckerator.cards WHERE name=%s"
 		params = (cardName)
 		
-		if fetchRecord(query, params) == None:
-
-			cardData = requests.get("https://api.scryfall.com/cards/named?fuzzy=" + cardName).json()
-			####### GET CARD COLOR, CMC, TYPE, AND ART FROM SCRYFALL
-			
-			try:
-				if cardData['status'] == 404:
-					###A GIVEN CARD DOESNT EXIST!
-					return render_template("error.html", 
-						name="Invalid Card Name", 
-						back="javascript:history.back()", 
-						error="The card name \"" + cardName + "\" is invalid. No such card exists.")
-			except:
-				pass #this is fine, the 'status' wont even appear if the request is valid, because it returns a card object
-
-
-			time.sleep(0.1)
-			####### SLEEP .1 SECONDS TO BE NICE TO SCRYFALL
-
-			cardColor= StringAllColors(cardData['colors'])
-			cardCmc  = cardData['cmc']
-			cardType = cardData['type_line']
-			cardArtUrl = cardData['image_uris']['normal']
-
-			query = "INSERT INTO deckerator.cards (name, color, cmc, type, art_url) VALUES (%s, %s, %s, %s, %s)"
-			params = (cardName, cardColor, cardCmc, cardType, cardArtUrl)
-			fetchRecord(query, params)
-			####### INSERT IT INTO MY DATABASE	
+		if fetchRecord(query, params) == None: #if we dont already have the card in the DB
+			scryfallGetCard(cardName)
 
 	deckdict = json.dumps(deckdict) #to make it into valid json
 
@@ -540,11 +511,18 @@ def deckview(deckid):
 		query = "SELECT name, color, cmc, type, art_url FROM deckerator.cards WHERE name=%s"
 		params = (cardName)
 		cardData = fetchRecord(query, params)
+
+		if cardData == None:
+			scryfallGetCard(cardName) #inserts into db, try again now
+			query = "SELECT name, color, cmc, type, art_url FROM deckerator.cards WHERE name=%s"
+			params = (cardName)
+			cardData = fetchRecord(query, params)
+
 		cardInfoDict[cardName] = cardData[1:]
 
 	InfoPackage = json.dumps(cardInfoDict)
 
-	return render_template("deck.html", name=deckData[0], deck=deckData[1], info=InfoPackage, owner=(deckData[2]==session['userid']))
+	return render_template("deck.html", name=deckData[0], deck=deckData[1], info=InfoPackage, deckOwner=deckData[2], owner=(deckData[2]==session['userid']))
 
 
 
@@ -575,7 +553,99 @@ def changeUsername():
 	else: #found and its someone else
 		return render_template("error.html", back="javascript:history.back()", name="Username Error", error="That username is already taken. Sorry.")
 
+@site.route("/changeemail", methods=["POST"])
+def changeEmail():
+	newEmail = request.form["newEmail"]
+	oldEmail = session['email']
+
+	#FIRST, CHECK FOR EMAIL TAKEN
+
+	query = "SELECT email FROM deckerator.users WHERE email=%s"
+	params = (newEmail)
+	collision = fetchRecord(query, params)	
+
+	if collision == None: #not found? good to go
+		query = "UPDATE deckerator.users SET email=%s WHERE email=%s"
+		params = (newEmail, oldEmail)
+		fetchRecord(query, params)
+		#success!
+		session['email'] = newEmail #one last thing...
+		return redirect("/settings")
+
+	elif collision[0] == oldEmail: #found and its YOU?
+		return render_template("error.html", back="javascript:history.back()", name="Email Error", error="Uh. That's the same email as before.")	
+
+	else: #found and its someone else
+		return render_template("error.html", back="javascript:history.back()", name="Email Error", error="That email address is already in use.")	
+
+@site.route("/changepassword", methods=["POST"])
+def changePassword():
+	newPassword = request.form["newPassword"]
+
+	secureNewPassword = password_hash(newPassword)
 	
+	query = "UPDATE deckerator.users SET password=%s WHERE userid=%s"
+	params = (secureNewPassword, session['userid'])
+	fetchRecord(query, params)
+	
+	return logout() #logs out and redirects to splash
+
+	
+@site.route("/deleteaccount", methods=["POST"])
+def deleteAccount():
+	email = request.form['email']
+	password = request.form['password']
+
+	#Check for correct credentials before deletion
+	query = "SELECT userid FROM deckerator.users WHERE email=%s AND password=%s"
+	params = (email, password_hash(password))
+
+	collision = fetchRecord(query, params)
+	
+	if collision == None:
+		#wrong credentials
+		return render_template("error.html", back="javascript:history.back()", name="Deletion Error", error="Incorrect email or password for account deletion.")
+
+	else: #sad to see you go
+		query = "DELETE FROM deckerator.users WHERE email=%s AND password=%s"
+		params = (email, password_hash(password))
+		fetchRecord(query, params)
+
+		query = "DELETE FROM deckerator.decks WHERE userid=%s" #deletes ALL decks from user
+		params = (collision[0])
+		fetchRecord(query, params)
+
+		del session['userid']
+		del session['username']
+		del session['email']
+
+		return render_template("accountdeleted.html")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

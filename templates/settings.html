@@ -21,7 +21,24 @@
 			if (confirm("Are you sure you want to change your username?")){
 				document.getElementById("usernameForm").setAttribute("style", "");
 			}
+		}
 
+		function changeEmail () {
+			if (confirm("Are you sure you want to change your email address?")){
+				document.getElementById("emailForm").setAttribute("style", "");
+			}
+		}
+
+		function changePassword () {
+			if (confirm("Are you sure you want to change your password?")){
+				document.getElementById("passwordForm").setAttribute("style", "");
+			}
+		}
+
+		function deleteAccount(){
+			if (confirm("Are you absolutely 100% sure you want to delete your account?")){
+				document.getElementById("deleteAccountForm").setAttribute("style", "");
+			}
 		}
 
 	</script>
@@ -40,23 +57,36 @@
 	<p>
 		Email Address: {{session['email']}}
 		<button onclick="changeEmail()">Change Email Address</button>
+		<form id="emailForm" style="display: none;" action="changeemail" method="POST">
+			Type new email address here.
+			<input type="text" name="newEmail">
+			<button type="submit"> Submit </button>
+		</form>
 	</p>
 
 	<p>
 		<button onclick="changePassword()">Change Password</button>
+		<form id="passwordForm" style="display: none;" action="changepassword" method="POST">
+			Type new password here.
+			<input type="text" name="newPassword">
+			<button type="submit"> Submit </button>
+			<br>
+			Note: You will be logged out and you will need to log in again afterward.
+		</form>
 	</p>
 
-	<button onclick="delete()">Delete Account?</button>
-
-	<p>
-		<h2>future features:</h2>
-		<ul>
-			<li>delete account</li>
-			<li>change password</li>
-		</ul>
-
-	</p>
-
+	<button onclick="deleteAccount()">Delete Account?</button>
+	<form id="deleteAccountForm" style="display: none; color=red;" action="deleteaccount" method="POST">
+		<br>
+		Type your email address and password here to confirm permanent account deletion.
+		<br><br>
+		Email: <input type="text" name="email">
+		<br><br>
+		Password: <input type="password" name="password">
+		<br><br>
+		<button type="submit"> Submit Forever </button>
+	</form>
+	
 	<footer>
 		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
 	</footer>
