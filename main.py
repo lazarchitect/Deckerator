@@ -169,9 +169,10 @@ def scryfallGetCard(cardName):
 	cardCmc  = cardData['cmc']
 	cardType = cardData['type_line']
 	cardArtUrl = cardData['image_uris']['normal']
+	cardMultID = cardData['multiverse_ids'][0]
 
-	query = "INSERT INTO deckerator.cards (name, color, cmc, type, art_url) VALUES (%s, %s, %s, %s, %s)"
-	params = (cardName, cardColor, cardCmc, cardType, cardArtUrl)
+	query = "INSERT INTO deckerator.cards (name, color, cmc, type, art_url, mult_id) VALUES (%s, %s, %s, %s, %s, %s)"
+	params = (cardName, cardColor, cardCmc, cardType, cardArtUrl, cardMultID)
 	fetchRecord(query, params)
 	####### INSERT IT INTO MY DATABASE	
 
@@ -508,13 +509,13 @@ def deckview(deckid):
 	cardInfoDict = {}
 
 	for cardName in json.loads(deckData[1]):
-		query = "SELECT name, color, cmc, type, art_url FROM deckerator.cards WHERE name=%s"
+		query = "SELECT name, color, cmc, type, art_url, mult_id FROM deckerator.cards WHERE name=%s"
 		params = (cardName)
 		cardData = fetchRecord(query, params)
 
 		if cardData == None:
 			scryfallGetCard(cardName) #inserts into db, try again now
-			query = "SELECT name, color, cmc, type, art_url FROM deckerator.cards WHERE name=%s"
+			query = "SELECT name, color, cmc, type, art_url, mult_id FROM deckerator.cards WHERE name=%s"
 			params = (cardName)
 			cardData = fetchRecord(query, params)
 

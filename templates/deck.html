@@ -34,11 +34,18 @@
     			return true;
 			}
 
-			function populateList(obj, name){
+			function populateList(obj, name, infoObj){
 				if (isEmpty(obj) === false){
 					deckdiv.innerHTML += "<b>" + name + "</b><br>";
 					for (var k in obj){
-						deckdiv.innerHTML += obj[k] + " " + k + "<br>";
+						// k is the name of the card
+						deckdiv.innerHTML += obj[k] 
+										  + " <a href=http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid="
+										  + infoObj[k][4]
+										  + ">" 
+										  + k 
+										  + "</a>"
+										  + "<br>";
 					}
 					deckdiv.innerHTML += "<br>";
 				}
@@ -90,13 +97,13 @@
 				}
 			}
 
-			populateList(Creatures, "Creatures");
-			populateList(Artifacts, "Artifacts");
-			populateList(Enchantments, "Enchantments");
-			populateList(Instants, "Instants");
-			populateList(Sorceries, "Sorceries");
-			populateList(Lands, "Lands");
-			populateList(Planeswalkers, "Planeswalkers");
+			populateList(Creatures, "Creatures", cardInfoObj);
+			populateList(Artifacts, "Artifacts", cardInfoObj);
+			populateList(Enchantments, "Enchantments", cardInfoObj);
+			populateList(Instants, "Instants", cardInfoObj);
+			populateList(Sorceries, "Sorceries", cardInfoObj);
+			populateList(Lands, "Lands", cardInfoObj);
+			populateList(Planeswalkers, "Planeswalkers", cardInfoObj);
 
 
 			//send in a form with the deck's name to a flask page
