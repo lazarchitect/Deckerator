@@ -29,13 +29,19 @@
 			Http.send();
 			
 			Http.onreadystatechange=(e)=>{
-				var response = Http.responseText;
-				var obj = JSON.parse(response);
-				imageURL = obj.image_uris.normal;
-				cardName = obj.name;
-				document.getElementById('cardspot').setAttribute("src", imageURL);
-				document.getElementById('cardtext').innerText = "Click on the card to add it to your deck.";
-				document.getElementById('cardspot').setAttribute("onclick", "addToList(\"" + cardName+ "\")");
+				if(Http.status === 404){
+					imageURL = "static/notfound.png";
+					document.getElementById('cardspot').setAttribute("src", imageURL);
+				}
+				else if(Http.status === 200){
+					var response = Http.responseText;
+					var obj = JSON.parse(response);
+					imageURL = obj.image_uris.normal;
+					cardName = obj.name;
+					document.getElementById('cardspot').setAttribute("src", imageURL);
+					document.getElementById('cardtext').innerText = "Click on the card to add it to your deck.";
+					document.getElementById('cardspot').setAttribute("onclick", "addToList(\"" + cardName+ "\")");
+				}
 			}
 		}
 
@@ -43,8 +49,6 @@
 		function addToList(cardName){
 
 			var A = document.getElementById("decklist").innerHTML.split("\n").slice(0,-1); //need to drop the final newline
-
-			console.log(A);
 
 			for (var i = 0; i < A.length; i++) {
 				var tokens = A[i].split(" ");
@@ -55,12 +59,10 @@
 				var name;
 
 				if (!(count < 20000000000000000)){ //THIS IS JUST TO CHECK IF ITS A NUMBER OR NOT. NAN<ANY_INT WILL RETURN FALSE. _MOST_ NUMBERS WILL NOT. 
-					console.log("count is nan");
 					count = 0;
 					name = A[i];
 				}
 				else{	
-					console.log("count is NOT nan");
 					name = "";
 					for (var token_i = 1; token_i < tokens.length; token_i++){
 						name += tokens[token_i] + " ";
@@ -68,7 +70,7 @@
 					name = name.substring(0, name.length - 1);
 					
 				}
-				console.log("cardname is " + cardName + ". name is " + name + ".")
+			
 				if (cardName === name){
 					
 					A[i] = (count + 1) + " " + name;
@@ -110,15 +112,8 @@
 	</div>
 	
 
-
-
-	<!-- text box to type in cards for scryfall -->
-	<!-- when cards appear, click to add to deck -->
-	<!-- "save deck" button -->
-
-	<!-- for later: deck analysis box with mana curve, colors, land base, price, etc -->
-
 	<!-- for later: card recommender based on mana curve fit, colors, mechanics?? -->
+	
 	<footer>
 		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
 	</footer>
