@@ -39,7 +39,18 @@
 					deckdiv.innerHTML += "<b>" + name + "</b><br>";
 					for (var k in obj){
 						// k is the name of the card
-						deckdiv.innerHTML += obj[k] 
+
+						if(infoObj[k][4] === null){
+							deckdiv.innerHTML += obj[k] 
+										  + " <a href=http://gatherer.wizards.com/Pages/Card/Details.aspx?name="
+										  + k
+										  + ">" 
+										  + k 
+										  + "</a>"
+										  + "<br>";
+						}
+
+						else deckdiv.innerHTML += obj[k] 
 										  + " <a href=http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid="
 										  + infoObj[k][4]
 										  + ">" 
@@ -49,6 +60,14 @@
 					}
 					deckdiv.innerHTML += "<br>";
 				}
+			}
+
+			function exactCardCount (deckObj){
+				var retval = 0;
+				for(var k in deckObj){
+					if (deckObj.hasOwnProperty(k)) retval += deckObj[k];
+				}
+				return retval;
 			}
 
 
@@ -71,6 +90,15 @@
 			var Lands = {};
 			var Planeswalkers = {};
 
+			var whitecards = 0;
+			var blackcards = 0;
+			var bluecards = 0;
+			var redcards = 0;
+			var greencards = 0;
+			var colorlesscards = 0;
+
+			var LandCount = 0;
+
 			for(var card in decklistObj){
 				var typeline = cardInfoObj[card][2];
 				
@@ -91,11 +119,36 @@
 				}
 				else if (typeline.includes("Land")){
 					Lands[card] = decklistObj[card];
+					console.log(decklistObj[card]);
+					LandCount+=decklistObj[card];
 				}
 				else if (typeline.includes("Planeswalker")){
 					Planeswalkers[card] = decklistObj[card];
 				}
+
+				var colorString = cardInfoObj[card][0];
+				if (colorString.includes("W")){
+					whitecards += decklistObj[card];
+				}
+				if (colorString.includes("U")){
+					bluecards += decklistObj[card];
+				}
+				if (colorString.includes("B")){
+					blackcards += decklistObj[card];
+				}
+				if (colorString.includes("R")){
+					redcards += decklistObj[card];
+				}
+				if (colorString.includes("G")){
+					greencards += decklistObj[card];
+				}
+				if (colorString.includes("C") && typeline.includes("Land")==false){
+					colorlesscards += decklistObj[card];
+				}
+
 			}
+
+			var totalCount = whitecards + blackcards + bluecards + redcards + greencards + colorlesscards;
 
 			populateList(Creatures, "Creatures", cardInfoObj);
 			populateList(Artifacts, "Artifacts", cardInfoObj);
@@ -144,6 +197,104 @@
 				if (confirm("Are you sure you want to delete this deck?")){
 					formsubmit("/deletedeck");
 				}
+			}
+
+			var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+			var side = 300; //hard coded, arbitrary
+			svg.setAttribute("width", side);
+			svg.setAttribute("height", side);
+			// svg.setAttribute("style", "background-color: skyblue");
+			svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+			var origin = {"x":svg.getAttribute("width")/2, "y":svg.getAttribute("width")/2};
+			var r = side/2.1; //radius
+			
+			var start = {"x": origin["x"]-r, "y": origin["y"]};
+			var sweep_arc = 0;
+			var large_arc = 0;
+			var rotate = 0;
+			
+			function createColorArc(color, colorCount, cardsSoFar){
+				
+				if(colorCount===totalCount){
+					var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+					circle.setAttribute("cx", side/2);
+					circle.setAttribute("cy", side/2);
+					circle.setAttribute("r", r);
+					circle.setAttribute("fill", color);
+					circle.setAttribute("stroke", "black");
+					circle.setAttribute("stroke-width", "2");
+
+					return circle;
+				}
+
+				var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+				
+				var angle = (colorCount+cardsSoFar)/totalCount * 2 * Math.PI; //ANGLE IS IN RADIANS
+
+				var end={"x": Math.floor(-1*r * Math.cos(angle) + origin["x"]), 
+						 "y": Math.floor(-1*r * Math.sin(angle) + origin["y"])
+						};
+
+				if(colorCount > totalCount/2) large_arc = 1;
+				else large_arc = 0;
+
+				path.setAttribute("d", 
+					" M "+start["x"]+" "+start["y"]+ 
+					" L "+origin["x"]+" "+origin["y"]+
+					" L "+end["x"]+" "+end["y"]+
+					" A "+r+" "+r+" "+rotate+" "+large_arc+" "+sweep_arc+" "+start["x"]+" "+start["y"] );
+				
+				path.setAttribute("fill", color);
+				path.setAttribute("stroke", "black");
+				path.setAttribute("stroke-width", "2");
+
+				start = end;
+
+				return path;
+
+			}
+
+			var cardsSoFar = 0;
+
+			if(!(exactCardCount(decklistObj) === LandCount)){ 
+			//dont do art if deck is all lands
+
+				svg.appendChild(createColorArc("white", whitecards, cardsSoFar));
+				cardsSoFar += whitecards;
+				svg.appendChild(createColorArc("blue", bluecards, cardsSoFar));
+				cardsSoFar+=bluecards;
+				svg.appendChild(createColorArc("black", blackcards, cardsSoFar));
+				cardsSoFar += blackcards;
+				svg.appendChild(createColorArc("red", redcards, cardsSoFar));
+				cardsSoFar += redcards;
+				svg.appendChild(createColorArc("green", greencards, cardsSoFar));
+				cardsSoFar += greencards;
+				svg.appendChild(createColorArc("grey", colorlesscards, cardsSoFar));
+				cardsSoFar += colorlesscards;
+
+				var infoText = document.createElement("p");
+				if (whitecards > 0){
+					infoText.innerHTML += "Cards with White mana in their costs: "+whitecards + "<br>";
+				}
+				if (bluecards > 0){
+					infoText.innerHTML += "Cards with Blue mana in their costs: "+bluecards + "<br>";
+				}
+				if (blackcards > 0){
+					infoText.innerHTML += "Cards with Black mana in their costs: "+blackcards + "<br>";
+				}
+				if (redcards > 0){
+					infoText.innerHTML += "Cards with Red mana in their costs: "+redcards + "<br>";
+				}
+				if (greencards > 0){
+					infoText.innerHTML += "Cards with Green mana in their costs: "+greencards + "<br>";
+				}
+				if (colorlesscards > 0){
+					infoText.innerHTML+= "Cards with only colorless mana in their costs: "+colorlesscards + "<br>";
+				}
+
+				document.body.appendChild(infoText);
+				document.body.appendChild(svg);
 			}
 
 		</script>
