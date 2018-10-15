@@ -169,7 +169,10 @@ def scryfallGetCard(cardName):
 	cardCmc  = cardData['cmc']
 	cardType = cardData['type_line']
 	cardArtUrl = cardData['image_uris']['normal']
-	cardMultID = cardData['multiverse_ids'][0]
+	try:
+		cardMultID = cardData['multiverse_ids'][0]
+	except IndexError: #this is bcuz scryfall f'd up
+		cardMultID = None #handles this issue in JS
 
 	query = "INSERT INTO deckerator.cards (name, color, cmc, type, art_url, mult_id) VALUES (%s, %s, %s, %s, %s, %s)"
 	params = (cardName, cardColor, cardCmc, cardType, cardArtUrl, cardMultID)
