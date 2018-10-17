@@ -44,23 +44,6 @@ p{
 	font-size: 36px;
 }
 
-
-#footer{
-	left: -1%;
-	height: 50px;
-	background-color: #00A7AD;
-	width: 101%;
-	/*position: absolute;*/
-	bottom: 0px;
-}
-
-#footertext{
-	position: absolute;
-	bottom: 15px;
-	left: 3%;
-	color: white;
-}
-
 #loginbox{
 	width: 30%;
 	background-color: white;

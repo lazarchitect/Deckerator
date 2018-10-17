@@ -23,6 +23,12 @@
 
 		</div>
 
+		{% if owner %}
+			<button onclick="editdeck()"> Edit Deck </button>
+
+			<button onclick="deletedeck()"> Delete Deck </button>
+		{% endif %}
+
 		<script type="text/javascript">
 
 			function isEmpty(obj) {
@@ -293,23 +299,16 @@
 					infoText.innerHTML+= "Cards with only colorless mana in their costs: "+colorlesscards + "<br>";
 				}
 
-				document.body.appendChild(infoText);
-				document.body.appendChild(svg);
+				var contentDiv = document.getElementById('content');
+
+				contentDiv.appendChild(infoText);
+				contentDiv.appendChild(svg);
 			}
 
 		</script>
 
+		<br>
 
-		{% if owner %}
-			<button onclick="editdeck()"> Edit Deck </button>
-
-			<button onclick="deletedeck()"> Delete Deck </button>
-		{% endif %}
-
-	</div>
-
-	<div id="footer">
-		<div id="footertext"> Questions? Found a Bug? Want to Contribute? Contact: Eddie Lazar -> eddie.lazar@yahoo.com</div>
 	</div>
 
 
